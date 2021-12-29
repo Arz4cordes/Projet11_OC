@@ -35,13 +35,24 @@ concernant une application d'inscription à des tournois.
 2) Pour télécharger l'application, voici le lien GitHub:
     https://github.com/Arz4cordes/Projet11_OC
 
-3) Pour utiliser les programmes:
+3) Environnement virtuel à mettre en placepour utiliser l'application:
     * installer un environnement virtuel Python avec la commande python -m venv envp11
     * activer cet environnement virtuel
         avec la commande envp11/Scripts/activate sous Windows
         ou avec la commande source env/bin/activate sous Mac OS
 
-3) Le fichier requirements.txt contient les bibliothèques à installer:
+4) Le fichier requirements.txt contient les bibliothèques à installer:
     utiliser par exemple la commande python -m pip install -r requirements.txt
     pour installer les bibliothèques utilisées dans l'application.
-        
+
+5) Pour utiliser l'application après avoir mis en place l'environnement virtuel
+    et installé les bibliothèques:
+    * Sous Windows avec Powershell, taper la commande de configuration:
+        $env:FLASK_APP = "server.py"
+        puis lancer le serveur avec la commande: python -m flask run
+    * Sous Mac OS, taper la commande de configuration: export FLASK_APP=hello.py
+        puis lancer le serveur avec la commande: flask run (ou bien python -m flask run)
+
+6) Après avoir lancé le serveur, entrer l'adresse http://... , indiquée par la console,
+    dans un navigateur web (Edge, Chrome, Firefox ...)
+
