@@ -3,8 +3,11 @@ from flask import Flask, render_template, request, redirect, flash, url_for
 
 
 def loadClubs():
+    # KeyError si 'clubs' n'est pas dans le json
+    # Index out of range si 'clubs' est une liste vide...
     with open('clubs.json') as c:
         listOfClubs = json.load(c)['clubs']
+        # listOfClubs est une liste de dictionnaires avec les clés name, email, points
         return listOfClubs
 
 
