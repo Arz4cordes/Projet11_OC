@@ -2,20 +2,28 @@ import json
 from flask import Flask, render_template, request, redirect, flash, url_for
 
 
+def _initialize_clubs():
+    data = {'clubs': []}
+    with open('clubs.json', 'w') as club_file:
+        json.dump(data, club_file, indent=4)
+    return []
+
 def loadClubs():
     with open('clubs.json') as c:
-        listOfClubs = json.load(c)['clubs']
-        # listOfClubs est une liste de dictionnaires avec les clés name, email, points
-        return listOfClubs
+        try:
+            listOfClubs = json.load(c)['clubs']
+            # listOfClubs est une liste de dictionnaires avec les clés name, email, points
+            return listOfClubs
+        except KeyError:
+            c.close()
+            listOfClubs = _initialize_clubs()
+            return listOfClubs
 
 def _initialize_competitions():
     data = {'competitions': []}
     with open('competitions.json', 'w') as comp_file:
         json.dump(data, comp_file, indent=4)
-    with open('competitions.json') as comps:
-        listOfCompetitions = json.load(comps)['competitions']
-        return listOfCompetitions
-
+    return []
 
 def loadCompetitions():
     with open('competitions.json') as comps:

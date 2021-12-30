@@ -1,4 +1,5 @@
 import json
+import os
 
 import server
 from server import loadClubs, loadCompetitions, index, showSummary, \
@@ -23,10 +24,29 @@ def test_loadClubs_return_listOfClubs(monkeypatch):
     ]
     assert loadClubs() == expected_value
 
+class MockresponseEmptyClubJsonFile:
+
+    @staticmethod
+    def load():
+        return {}
+
+def test_loadClubs_with_empty_file(monkeypatch):
+
+    def mock_get(*args, **kwargs):
+        return MockresponseEmptyClubJsonFile().load()
+
+    def mockreturn():
+        return []
+
+    monkeypatch.setattr(json, "load", mock_get)
+    monkeypatch.setattr(server, "_initialize_clubs", mockreturn)
+    expected_value = []
+    assert loadClubs() == expected_value
+
 class MockResponseCompetitions:
 
     @staticmethod
-    def load(a_file):
+    def load():
         return {"competitions":[
         {"name": "Legends", "date": "2020-10-22 13:30;00", "numberOfPlaces": "25"}
     ]}
@@ -34,7 +54,7 @@ class MockResponseCompetitions:
 def test_loadCompetitions_return_listOfCompetitions(monkeypatch):
 
     def mock_get(*args, **kwargs):
-        return MockResponseCompetitions().load('competitions.json')
+        return MockResponseCompetitions().load()
 
     monkeypatch.setattr(json, "load", mock_get)
     expected_value = [
@@ -42,24 +62,19 @@ def test_loadCompetitions_return_listOfCompetitions(monkeypatch):
     ]
     assert loadCompetitions() == expected_value
 
-class MockResponseEmptyJsonFile:
+class MockResponseEmptyCompJsonFile:
 
     @staticmethod
-    def load(a_file):
-        return {"competitions":[]}
+    def load():
+        return {}
 
 def test_loadCompetitions_with_empty_file(monkeypatch):
 
-    def mock_get(*args, **kwargs):
-        return MockResponseEmptyJsonFile().load('competitions.json')
+    def mock_get(fake_data, *args, **kwargs):
+        return MockResponseEmptyCompJsonFile().load()
 
     def mockreturn():
-        data = {'competitions': []}
-        with open('file_for_test.json', 'w') as comp_file:
-            json.dump(data, comp_file, indent=4)
-        with open('file_for_test.json') as comps:
-            listOfCompetitions = json.load(comps)['competitions']
-            return listOfCompetitions
+        return []
 
     monkeypatch.setattr(json, "load", mock_get)
     monkeypatch.setattr(server, "_initialize_competitions", mockreturn)
