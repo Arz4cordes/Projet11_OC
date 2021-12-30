@@ -3,19 +3,29 @@ from flask import Flask, render_template, request, redirect, flash, url_for
 
 
 def loadClubs():
-    # KeyError si 'clubs' n'est pas dans le json
-    # Index out of range si 'clubs' est une liste vide...
     with open('clubs.json') as c:
         listOfClubs = json.load(c)['clubs']
         # listOfClubs est une liste de dictionnaires avec les clés name, email, points
         return listOfClubs
 
-
-def loadCompetitions():
+def _initialize_competitions():
+    data = {'competitions': []}
+    with open('competitions.json', 'w') as comp_file:
+        json.dump(data, comp_file, indent=4)
     with open('competitions.json') as comps:
         listOfCompetitions = json.load(comps)['competitions']
         return listOfCompetitions
 
+
+def loadCompetitions():
+    with open('competitions.json') as comps:
+        try:
+            listOfCompetitions = json.load(comps)['competitions']
+            return listOfCompetitions
+        except KeyError:
+            comps.close()
+            listOfCompetitions = _initialize_competitions()
+            return listOfCompetitions
 
 app = Flask(__name__)
 app.secret_key = 'something_special'

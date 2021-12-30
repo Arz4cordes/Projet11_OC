@@ -12,12 +12,6 @@ class MockResponseClubs:
         {"name": "myclub", "email": "abc@mybox.com", "points": "25"}
     ]}
 
-class MockResponseEmptyJsonFile:
-
-    @staticmethod
-    def load(a_file):
-        return {} 
-
 def test_loadClubs_return_listOfClubs(monkeypatch):
 
     def mock_get(*args, **kwargs):
@@ -48,11 +42,26 @@ def test_loadCompetitions_return_listOfCompetitions(monkeypatch):
     ]
     assert loadCompetitions() == expected_value
 
+class MockResponseEmptyJsonFile:
+
+    @staticmethod
+    def load(a_file):
+        return {"competitions":[]}
+
 def test_loadCompetitions_with_empty_file(monkeypatch):
 
     def mock_get(*args, **kwargs):
         return MockResponseEmptyJsonFile().load('competitions.json')
 
+    def mockreturn():
+        data = {'competitions': []}
+        with open('file_for_test.json', 'w') as comp_file:
+            json.dump(data, comp_file, indent=4)
+        with open('file_for_test.json') as comps:
+            listOfCompetitions = json.load(comps)['competitions']
+            return listOfCompetitions
+
     monkeypatch.setattr(json, "load", mock_get)
-    expected_value = {}
+    monkeypatch.setattr(server, "_initialize_competitions", mockreturn)
+    expected_value = []
     assert loadCompetitions() == expected_value
