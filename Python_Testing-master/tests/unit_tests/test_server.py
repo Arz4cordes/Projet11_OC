@@ -1,11 +1,51 @@
 import json
 
 import pytest
-from flask import request
+from flask import request, session
 
 import server
 from server import loadClubs, loadCompetitions, index, showSummary, \
                    book, purchasePlaces, logout
+
+@pytest.fixture
+def list_of_clubs_file():
+    # Renvoie un dictionnaire avec la clé 'clubs'
+    # correspondant au contenu du fichier json
+    the_clubs = {
+        "clubs":[
+            {
+                "name": "myclub",
+                "email": "abc@mybox.com",
+                "points": "25"
+            },
+            {
+                "name": "otherclub",
+                "email": "xyz@mybox.fr",
+                "points": "3"
+            }
+        ]
+    }
+    return the_clubs
+
+@pytest.fixture
+def list_of_competitions_file():
+    # Renvoie un dictionnaire avec la clé 'competitions'
+    # correspondant au contenu du fichier json
+    the_competitions = {
+        "competitions":[
+            {
+                "name": "allStars",
+                "date": "2021-03-21 20:30:00",
+                "numberOfPlaces": "48"
+            },
+            {
+                "name": "juniorsChampionship",
+                "date": "2021-10-22 14:00:00",
+                "numberOfPlaces": "10"
+            }
+        ]
+    }
+    return the_competitions
 
 """
 Test de la fonction loadClubs:
@@ -18,20 +58,16 @@ si le fichier json ne contient pas la clé Clubs
 class MockResponseClubs:
 
     @staticmethod
-    def load(a_file):
-        return {"clubs":[
-        {"name": "myclub", "email": "abc@mybox.com", "points": "25"}
-    ]}
+    def load(list_of_clubs_file):
+        return list_of_clubs_file
 
-def test_loadClubs_return_listOfClubs(monkeypatch):
+def test_loadClubs_return_listOfClubs(monkeypatch, list_of_clubs_file):
 
     def mock_get(*args, **kwargs):
-        return MockResponseClubs().load('clubs.json')
+        return MockResponseClubs().load(list_of_clubs_file)
 
     monkeypatch.setattr(json, "load", mock_get)
-    expected_value = [
-        {"name": "myclub", "email": "abc@mybox.com", "points": "25"}
-    ]
+    expected_value = list_of_clubs_file["clubs"]
     assert loadClubs() == expected_value
 
 class MockresponseEmptyClubJsonFile:
@@ -64,20 +100,16 @@ json ne contient pas la clé Competitions
 class MockResponseCompetitions:
 
     @staticmethod
-    def load():
-        return {"competitions":[
-        {"name": "Legends", "date": "2020-10-22 13:30;00", "numberOfPlaces": "25"}
-    ]}
+    def load(list_of_competitions_file):
+        return list_of_competitions_file
 
-def test_loadCompetitions_return_listOfCompetitions(monkeypatch):
+def test_loadCompetitions_return_listOfCompetitions(monkeypatch, list_of_competitions_file):
 
     def mock_get(*args, **kwargs):
-        return MockResponseCompetitions().load()
+        return MockResponseCompetitions().load(list_of_competitions_file)
 
     monkeypatch.setattr(json, "load", mock_get)
-    expected_value = [
-        {"name": "Legends", "date": "2020-10-22 13:30;00", "numberOfPlaces": "25"}
-    ]
+    expected_value = list_of_competitions_file['competitions']
     assert loadCompetitions() == expected_value
 
 class MockResponseEmptyCompJsonFile:
@@ -125,3 +157,64 @@ def test_index_context():
     the_app.testing = True
     with the_app.test_request_context('/'):
         assert request.path == '/'
+
+"""
+Test de la fonction showSummary:
+Vérifier que l'accès à la page est OK avec un club connecté,
+vérifier que les arguments club et competitions sont passés à la vue
+Vérifier que l'accès à la vue n'est pas permis
+si un email incorrect est entré
+Vérifier que la page n'est pas accessible avec une méthode get
+"""
+
+
+def test_showSummary_status(mocker, client, list_of_clubs_file):
+    existing_club = list_of_clubs_file['clubs'][0]
+    correct_email = existing_club['email']
+    mocker.patch.object(server, 'clubs', list_of_clubs_file['clubs'])
+    form = {'email': correct_email}
+    response = client.post('/showSummary',
+                           data=form)
+    assert response.status_code == 200
+
+def test_showSummary_return_parameters(mocker,
+                                       client,
+                                       list_of_clubs_file,
+                                       list_of_competitions_file):
+    
+    def mockreturn(list_of_clubs_file, list_of_competitions_file):
+        the_club = list_of_clubs_file['clubs'][0]
+        the_competitions = list_of_competitions_file['competitions']
+        parameters = {
+            'club': the_club,
+            'competitions': the_competitions
+        }
+        return parameters
+    
+    existing_club = list_of_clubs_file['clubs'][0]
+    correct_email = existing_club['email']
+    mocker.patch.object(server, 'clubs', list_of_clubs_file['clubs'])
+    mocker.patch.object(server, 'competitions', list_of_competitions_file['competitions'])
+    mocker.patch('server.render_template',
+                 return_value=mockreturn(list_of_clubs_file, list_of_competitions_file))
+    form = {'email': correct_email}
+    response = client.post('/showSummary',
+                           data=form)
+    expected_value = {
+        'club': existing_club,
+        'competitions': list_of_competitions_file['competitions']
+    }
+    assert showSummary() == expected_value
+
+def test_showSummary_club_not_exists(mocker, client, list_of_clubs_file):
+    mocker.patch.object(server, 'clubs', list_of_clubs_file['clubs'])
+    form = {'email': 'not_in_clubs@mail.com'}
+    response = client.post('/showSummary',
+                           data=form)
+    print(response.status_code)
+    assert response.status_code >= 300
+
+def test_showSummary_wrong_method(mocker, client, list_of_clubs_file):
+    mocker.patch.object(server, 'clubs', list_of_clubs_file['clubs'])
+    response = client.get('/showSummary')
+    assert response.status_code == 405
