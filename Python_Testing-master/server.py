@@ -1,5 +1,7 @@
 import json
-from flask import Flask, render_template, request, redirect, flash, url_for
+from flask import Flask, render_template, \
+                  request, redirect, flash, \
+                  url_for
 
 
 def _initialize_clubs():
@@ -49,8 +51,13 @@ def index():
 
 @app.route('/showSummary', methods=['POST'])
 def showSummary():
-    club = [club for club in clubs if club['email'] == request.form['email']][0]
-    return render_template('welcome.html', club=club, competitions=competitions)
+    club = [club for club in clubs if club['email'] == request.form['email']]
+    if club == []:
+        flash("Sorry, this email doesn't exist in the database...")
+        return redirect(url_for('index'))
+    else:
+        actual_club = club[0]
+    return render_template('welcome.html', club=actual_club, competitions=competitions)
 
 
 @app.route('/book/<competition>/<club>')

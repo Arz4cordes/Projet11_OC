@@ -167,7 +167,6 @@ si un email incorrect est entré
 Vérifier que la page n'est pas accessible avec une méthode get
 """
 
-
 def test_showSummary_status(mocker, client, list_of_clubs_file):
     existing_club = list_of_clubs_file['clubs'][0]
     correct_email = existing_club['email']
