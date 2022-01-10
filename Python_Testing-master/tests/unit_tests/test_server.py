@@ -241,25 +241,6 @@ Tester la fonction avec des paramètres club et competition
 invalides
 """
 
-def test_book_status(client, mocker,
-                     list_of_clubs_file,
-                     list_of_competitions_file):
-    # club est le club actuel
-    # competition est la competition choisie
-    # clubs est l'ensemble des clubs
-    # competitions est l'ensemble des compétitions
-    actual_club = list_of_clubs_file['clubs'][0]
-    competition_choose = list_of_competitions_file['competitions'][0]
-    club = actual_club["name"]
-    competition = competition_choose["name"]
-    mocker.patch.object(server, 'clubs',
-                        list_of_clubs_file['clubs'])
-    mocker.patch.object(server, 'competitions',
-                        list_of_competitions_file['competitions'])
-    book_url = '/book/' + str(competition) + '/' + str(club)
-    response = client.get(book_url)
-    assert response.status_code == 200
-
 def test_book_wrong_method(client,
                      list_of_clubs_file,
                      list_of_competitions_file):
@@ -274,6 +255,21 @@ def test_book_wrong_method(client,
 """
 Première version du test concernant les paramètres
 renvoyés au template, test à supprimer.
+def test_book_status(client, mocker,
+                     list_of_clubs_file,
+                     list_of_competitions_file):
+    actual_club = list_of_clubs_file['clubs'][0]
+    competition_choose = list_of_competitions_file['competitions'][0]
+    club = actual_club["name"]
+    competition = competition_choose["name"]
+    mocker.patch.object(server, 'clubs',
+                        list_of_clubs_file['clubs'])
+    mocker.patch.object(server, 'competitions',
+                        list_of_competitions_file['competitions'])
+    book_url = '/book/' + str(competition) + '/' + str(club)
+    response = client.get(book_url)
+    assert response.status_code == 200
+
 def test_book_return_parameters(client, mocker,
                                 list_of_clubs_file,
                                 list_of_competitions_file):
@@ -368,7 +364,7 @@ def captured_templates(app):
     finally:
         template_rendered.disconnect(record, app)
 
-def test_template_index(mocker, client,
+def test_template_booking_and_parameters(mocker, client,
                         list_of_clubs_file,
                         list_of_competitions_file):
     with captured_templates(server.app) as templates:
@@ -388,3 +384,103 @@ def test_template_index(mocker, client,
         assert template.name == 'booking.html'
         assert context['club'] == [actual_club]
         assert context['competition'] == [competition_choose]
+
+"""
+TEST DE LA FONCTION purchasePlaces:
+Les données club['name'] (club actuel),
+competition['name'] (la competition sélectionnée
+visible à la page précédente),
+et places (le nombre de places entré par l'utilisateur)
+sont passées en POST à la vue.
+Ce que fait la fonction:
+competition est une liste de competitions dont le nom
+est celui du paramètre competiion['name'] du formulaire.
+club est une liste de clubs dont le nom
+est celui de club['name'] du formulaire.
+placesRequired est un int valant le nombre de places
+récupéré dans le formulaire.
+competition['numberOfPlaces'] est mis à jour
+en enlevant le nombre de places réservées.
+return: le template welcome.html,
+ainsi que les paramètres club (club actuel)
+et competitions (liste).
+#### Vérifier que la requète est OK 
+#### Vérifier que la requète en GET n'est pas possible
+#### Vérifier que les paramètres club et competitions 
+sont bien passés au template et vérifier le template passé 
+4. Tester avec une liste de clubs vide
+5. Tester avec une liste de compétitions vide
+6. Tester avec un club invalide
+7. Tester avec une competition invalide
+8. Verifier que le nombre de places pour la competition
+est bien à jour
+9. Vérifier que la réservation n'est pas possible
+si il ne reste pas assez de places
+10. Vérifier que la réservation n'est pas possible
+si le club n'a pas assez de places
+"""
+
+def test_template_welcome_after_booking(mocker, client,
+                        list_of_clubs_file,
+                        list_of_competitions_file):
+    with captured_templates(server.app) as templates:
+        actual_club = list_of_clubs_file['clubs'][0]
+        competition_choose = list_of_competitions_file['competitions'][0]
+        club_name = actual_club["name"]
+        competition_name = competition_choose["name"]
+        mocker.patch.object(server, 'clubs',
+                            list_of_clubs_file['clubs'])
+        mocker.patch.object(server, 'competitions',
+                            list_of_competitions_file['competitions'])
+        form = {'club': club_name,
+                'competition': competition_name,
+                'places': 5}
+        response = client.post('/purchasePlaces', data=form)
+        assert response.status_code == 200
+        assert len(templates) == 1
+        template, context = templates[0]
+        assert template.name == 'welcome.html'
+        assert context['club'] == actual_club
+        assert context['competitions'] == list_of_competitions_file['competitions']
+
+def test_purchasePlaces_wrong_method(client,
+                                     list_of_clubs_file,
+                                     list_of_competitions_file):
+    actual_club = list_of_clubs_file['clubs'][0]
+    competition_choose = list_of_competitions_file['competitions'][0]
+    club_name = actual_club["name"]
+    competition_name = competition_choose["name"]
+    response = client.get('/purchasePlaces')
+    assert response.status_code == 405
+
+def test_purchasePlaces_with_clubs_empty(client, mocker,
+                                         list_of_clubs_file,
+                                         list_of_competitions_file):
+    actual_club = list_of_clubs_file['clubs'][0]
+    competition_choose = list_of_competitions_file['competitions'][0]
+    club_name = actual_club["name"]
+    competition_name = competition_choose["name"]
+    mocker.patch.object(server, 'clubs', [])
+    mocker.patch.object(server, 'competitions',
+                        list_of_competitions_file['competitions'])
+    form = {'club': club_name,
+            'competition': competition_name,
+            'places': 5}
+    response = client.post('/purchasePlaces', data=form)
+    assert response.status_code == 200
+
+def test_book_with_competitions_empty(client, mocker,
+                                      list_of_clubs_file,
+                                      list_of_competitions_file):
+    actual_club = list_of_clubs_file['clubs'][0]
+    competition_choose = list_of_competitions_file['competitions'][0]
+    club_name = actual_club["name"]
+    competition_name = competition_choose["name"]
+    mocker.patch.object(server, 'clubs',
+                        list_of_clubs_file['clubs'])
+    mocker.patch.object(server, 'competitions', [])
+    form = {'club': club_name,
+            'competition': competition_name,
+            'places': 5}
+    response = client.post('/purchasePlaces', data=form)
+    assert response.status_code == 200
