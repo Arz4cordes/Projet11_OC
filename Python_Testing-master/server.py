@@ -83,10 +83,24 @@ def purchasePlaces():
         the_competition = competition[0]
         the_club = club[0]
         placesRequired = int(request.form['places'])
-        the_competition['numberOfPlaces'] = str(int(the_competition['numberOfPlaces']) - placesRequired)
-        the_club['points'] = str(int(the_club['points']) - placesRequired)
-        flash('Great-booking complete!')
-        return render_template('welcome.html', club=the_club, competitions=competitions)
+        new_club_points = int(the_club['points']) - placesRequired
+        if placesRequired > 12:
+            flash("You can't book more than 12 places for a competition !")
+            return render_template('booking.html', club=the_club, competition=the_competition)
+        elif new_club_points < 0:
+            flash("You don't own enough points to book all these places")
+            return render_template('booking.html', club=the_club, competition=the_competition)
+        else:
+            new_competition_points = int(the_competition['numberOfPlaces']) - placesRequired
+            if new_competition_points < 0:
+                flash("There's not enough places in this competition \n \
+                    to book all these places")
+                return render_template('booking.html', club=the_club, competition=the_competition) 
+            else:
+                the_competition['numberOfPlaces'] = str(new_competition_points)
+                the_club['points'] = str(new_club_points)
+                flash('Great-booking complete!')
+                return render_template('welcome.html', club=the_club, competitions=competitions)
 
 
 # TODO: Add route for points display
@@ -95,8 +109,3 @@ def purchasePlaces():
 @app.route('/logout')
 def logout():
     return redirect(url_for('index'))
-
-with app.test_request_context():
-    print('#### URL FOR ####')
-    print(url_for('index'))
-    print(url_for('showSummary'))

@@ -508,7 +508,7 @@ def test_purchasePlaces_when_no_place_available(mocker, client,
                             list_of_clubs_file['clubs'])
         mocker.patch.object(server, 'competitions',
                             list_of_competitions_file['competitions'])
-        places_booked = int(competition_places) + 10
+        places_booked = int(competition_places) + 1
         form = {'club': club_name,
                 'competition': competition_name,
                 'places': places_booked}
@@ -518,20 +518,15 @@ def test_purchasePlaces_when_no_place_available(mocker, client,
         expected_value_for_competition = competition_places
         assert context['club'] == actual_club
         assert context['club']['points'] == expected_value_for_club
-        actual_competition = [comp for comp in context['competitions'] if comp['name'] == competition_name]
-        if actual_competition:
-            assert actual_competition[0] == competition_choose
-            assert actual_competition[0]['numberOfPlaces'] == expected_value_for_competition
-        else:
-            print("Problème avec la compétition envoyée en sortie")
-            assert 'magic' == 42
+        assert context['competition'] == competition_choose
+        assert context['competition']['numberOfPlaces'] == expected_value_for_competition
         assert template.name == 'booking.html'
 
 def test_purchasePlaces_when_club_owns_not_enough_places(mocker, client,
                                                          list_of_clubs_file,
                                                          list_of_competitions_file):
     with captured_templates(server.app) as templates:
-        actual_club = list_of_clubs_file['clubs'][0]
+        actual_club = list_of_clubs_file['clubs'][1]
         club_places = actual_club['points']
         competition_choose = list_of_competitions_file['competitions'][0]
         competition_places = competition_choose['numberOfPlaces']
@@ -541,7 +536,7 @@ def test_purchasePlaces_when_club_owns_not_enough_places(mocker, client,
                             list_of_clubs_file['clubs'])
         mocker.patch.object(server, 'competitions',
                             list_of_competitions_file['competitions'])
-        places_booked = int(club_places) + 10
+        places_booked = int(club_places) + 1
         form = {'club': club_name,
                 'competition': competition_name,
                 'places': places_booked}
@@ -551,13 +546,8 @@ def test_purchasePlaces_when_club_owns_not_enough_places(mocker, client,
         expected_value_for_competition = competition_places
         assert context['club'] == actual_club
         assert context['club']['points'] == expected_value_for_club
-        actual_competition = [comp for comp in context['competitions'] if comp['name'] == competition_name]
-        if actual_competition:
-            assert actual_competition[0] == competition_choose
-            assert actual_competition[0]['numberOfPlaces'] == expected_value_for_competition
-        else:
-            print("Problème avec la compétition envoyée en sortie")
-            assert 'magic' == 42
+        assert context['competition'] == competition_choose
+        assert context['competition']['numberOfPlaces'] == expected_value_for_competition
         assert template.name == 'booking.html'
 
 def test_purchasePlaces_when_club_wants_too_many_places(mocker, client,
@@ -574,21 +564,15 @@ def test_purchasePlaces_when_club_wants_too_many_places(mocker, client,
                             list_of_clubs_file['clubs'])
         mocker.patch.object(server, 'competitions',
                             list_of_competitions_file['competitions'])
-        places_booked = 13
         form = {'club': club_name,
                 'competition': competition_name,
-                'places': places_booked}
+                'places': 13}
         response = client.post('/purchasePlaces', data=form)
         template, context = templates[0]
         expected_value_for_club = club_places
         expected_value_for_competition = competition_places
         assert context['club'] == actual_club
         assert context['club']['points'] == expected_value_for_club
-        actual_competition = [comp for comp in context['competitions'] if comp['name'] == competition_name]
-        if actual_competition:
-            assert actual_competition[0] == competition_choose
-            assert actual_competition[0]['numberOfPlaces'] == expected_value_for_competition
-        else:
-            print("Problème avec la compétition envoyée en sortie")
-            assert 'magic' == 42
+        assert context['competition'] == competition_choose
+        assert context['competition']['numberOfPlaces'] == expected_value_for_competition
         assert template.name == 'booking.html'
