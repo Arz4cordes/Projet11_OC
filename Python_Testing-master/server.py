@@ -6,12 +6,13 @@ from flask import Flask, render_template, \
 
 def _initialize_clubs():
     data = {'clubs': []}
-    with open('clubs.json', 'w') as club_file:
+    with open(clubs_file, 'w') as club_file:
         json.dump(data, club_file, indent=4)
     return []
 
+
 def loadClubs():
-    with open('clubs.json') as c:
+    with open(clubs_file) as c:
         try:
             listOfClubs = json.load(c)['clubs']
             # listOfClubs est une liste de dictionnaires avec les clés name, email, points
@@ -21,14 +22,16 @@ def loadClubs():
             listOfClubs = _initialize_clubs()
             return listOfClubs
 
+
 def _initialize_competitions():
     data = {'competitions': []}
-    with open('competitions.json', 'w') as comp_file:
+    with open(competitions_file, 'w') as comp_file:
         json.dump(data, comp_file, indent=4)
     return []
 
+
 def loadCompetitions():
-    with open('competitions.json') as comps:
+    with open(competitions_file) as comps:
         try:
             listOfCompetitions = json.load(comps)['competitions']
             return listOfCompetitions
@@ -37,9 +40,11 @@ def loadCompetitions():
             listOfCompetitions = _initialize_competitions()
             return listOfCompetitions
 
+
 app = Flask(__name__)
 app.secret_key = 'something_special'
-
+competitions_file = 'competitions.json'
+clubs_file = 'clubs.json'
 competitions = loadCompetitions()
 clubs = loadClubs()
 
@@ -65,7 +70,7 @@ def book(competition, club):
     foundClub = [c for c in clubs if c['name'] == club]
     foundCompetition = [c for c in competitions if c['name'] == competition]
     if foundClub and foundCompetition:
-        return render_template('booking.html', club=foundClub, competition=foundCompetition)
+        return render_template('booking.html', club=foundClub[0], competition=foundCompetition[0])
     else:
         flash("Something went wrong-please try again")
         return render_template('welcome.html', club=club, competitions=competitions)
@@ -95,7 +100,7 @@ def purchasePlaces():
             if new_competition_points < 0:
                 flash("There's not enough places in this competition \n \
                     to book all these places")
-                return render_template('booking.html', club=the_club, competition=the_competition) 
+                return render_template('booking.html', club=the_club, competition=the_competition)
             else:
                 the_competition['numberOfPlaces'] = str(new_competition_points)
                 the_club['points'] = str(new_club_points)

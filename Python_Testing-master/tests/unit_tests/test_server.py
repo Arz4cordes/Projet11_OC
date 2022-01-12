@@ -1,18 +1,20 @@
 import json
+import os
 
 import pytest
-from flask import request, url_for
-
+from flask import request, template_rendered
+from contextlib import contextmanager
 import server
-from server import loadClubs, loadCompetitions, index, showSummary, \
-                   book, purchasePlaces, logout
+from server import loadClubs, loadCompetitions, showSummary, \
+                   _initialize_clubs, _initialize_competitions
+
 
 @pytest.fixture
 def list_of_clubs_file():
     # Renvoie un dictionnaire avec la clé 'clubs'
     # correspondant au contenu du fichier json
     the_clubs = {
-        "clubs":[
+        "clubs": [
             {
                 "name": "myclub",
                 "email": "abc@mybox.com",
@@ -27,12 +29,13 @@ def list_of_clubs_file():
     }
     return the_clubs
 
+
 @pytest.fixture
 def list_of_competitions_file():
     # Renvoie un dictionnaire avec la clé 'competitions'
     # correspondant au contenu du fichier json
     the_competitions = {
-        "competitions":[
+        "competitions": [
             {
                 "name": "allStars",
                 "date": "2021-03-21 20:30:00",
@@ -47,12 +50,14 @@ def list_of_competitions_file():
     }
     return the_competitions
 
+
 @pytest.fixture
 def client():
     new_app = server.app
     new_app.testing = True
     with new_app.test_client() as c:
         yield c
+
 
 """
 TEST DE LA FONCTION loadClubs:
@@ -62,11 +67,14 @@ TEST DE LA FONCTION loadClubs:
 et renvoie une liste vide
 si le fichier json ne contient pas la clé Clubs
 """
+
+
 class MockResponseClubs:
 
     @staticmethod
     def load(list_of_clubs_file):
         return list_of_clubs_file
+
 
 def test_loadClubs_return_listOfClubs(monkeypatch, list_of_clubs_file):
 
@@ -77,11 +85,13 @@ def test_loadClubs_return_listOfClubs(monkeypatch, list_of_clubs_file):
     expected_value = list_of_clubs_file["clubs"]
     assert loadClubs() == expected_value
 
+
 class MockresponseEmptyClubJsonFile:
 
     @staticmethod
     def load():
         return {}
+
 
 def test_loadClubs_with_empty_file(monkeypatch):
 
@@ -96,6 +106,7 @@ def test_loadClubs_with_empty_file(monkeypatch):
     expected_value = []
     assert loadClubs() == expected_value
 
+
 """
 TEST DE LA FONCTION loadCompetitions:
 #### Verifier que la fonction renvoie bien une liste de competitions
@@ -104,11 +115,14 @@ indiquée dans un fichier json
 et renvoie une liste vide si le fichier
 json ne contient pas la clé Competitions
 """
+
+
 class MockResponseCompetitions:
 
     @staticmethod
     def load(list_of_competitions_file):
         return list_of_competitions_file
+
 
 def test_loadCompetitions_return_listOfCompetitions(monkeypatch, list_of_competitions_file):
 
@@ -119,11 +133,13 @@ def test_loadCompetitions_return_listOfCompetitions(monkeypatch, list_of_competi
     expected_value = list_of_competitions_file['competitions']
     assert loadCompetitions() == expected_value
 
+
 class MockResponseEmptyCompJsonFile:
 
     @staticmethod
     def load():
         return {}
+
 
 def test_loadCompetitions_with_empty_file(monkeypatch):
 
@@ -138,6 +154,7 @@ def test_loadCompetitions_with_empty_file(monkeypatch):
     expected_value = []
     assert loadCompetitions() == expected_value
 
+
 """
 TEST DE LA FONCTION index:
 #### Vérifier que l'accès à la page est OK
@@ -145,19 +162,23 @@ TEST DE LA FONCTION index:
 #### Vérifier que la requète http fonctionne avec l'url mentionnée
 """
 
+
 def test_index_status(client):
     response = client.get('/')
     assert response.status_code == 200
 
+
 def test_index_wrong_method(client):
     response = client.post('/')
     assert response.status_code == 405
+
 
 def test_index_context():
     the_app = server.app
     the_app.testing = True
     with the_app.test_request_context('/'):
         assert request.path == '/'
+
 
 """
 TEST DE LA FONCTION showSummary:
@@ -178,6 +199,7 @@ si un email incorrect est entré
 #### Vérifier que la page n'est pas accessible avec une méthode get
 """
 
+
 def test_showSummary_status(mocker, client, list_of_clubs_file):
     existing_club = list_of_clubs_file['clubs'][0]
     correct_email = existing_club['email']
@@ -187,11 +209,12 @@ def test_showSummary_status(mocker, client, list_of_clubs_file):
                            data=form)
     assert response.status_code == 200
 
+
 def test_showSummary_return_parameters(mocker,
                                        client,
                                        list_of_clubs_file,
                                        list_of_competitions_file):
-    
+
     def mockreturn(list_of_clubs_file, list_of_competitions_file):
         the_club = list_of_clubs_file['clubs'][0]
         the_competitions = list_of_competitions_file['competitions']
@@ -200,7 +223,7 @@ def test_showSummary_return_parameters(mocker,
             'competitions': the_competitions
         }
         return parameters
-    
+
     existing_club = list_of_clubs_file['clubs'][0]
     correct_email = existing_club['email']
     mocker.patch.object(server, 'clubs', list_of_clubs_file['clubs'])
@@ -209,13 +232,13 @@ def test_showSummary_return_parameters(mocker,
                  return_value=mockreturn(list_of_clubs_file,
                                          list_of_competitions_file))
     form = {'email': correct_email}
-    response = client.post('/showSummary',
-                           data=form)
+    client.post('/showSummary', data=form)
     expected_value = {
         'club': existing_club,
         'competitions': list_of_competitions_file['competitions']
     }
     assert showSummary() == expected_value
+
 
 def test_showSummary_club_not_exists(mocker, client, list_of_clubs_file):
     mocker.patch.object(server, 'clubs', list_of_clubs_file['clubs'])
@@ -225,10 +248,12 @@ def test_showSummary_club_not_exists(mocker, client, list_of_clubs_file):
     print(response.status_code)
     assert response.status_code >= 300
 
+
 def test_showSummary_wrong_method(mocker, client, list_of_clubs_file):
     mocker.patch.object(server, 'clubs', list_of_clubs_file['clubs'])
     response = client.get('/showSummary')
     assert response.status_code == 405
+
 
 """
 TEST DE LA FONCTION book:
@@ -254,9 +279,10 @@ sont bien envoyés au template
 invalides
 """
 
+
 def test_book_wrong_method(client,
-                     list_of_clubs_file,
-                     list_of_competitions_file):
+                           list_of_clubs_file,
+                           list_of_competitions_file):
     actual_club = list_of_clubs_file['clubs'][0]
     competition_choose = list_of_competitions_file['competitions'][0]
     club = actual_club["name"]
@@ -264,6 +290,7 @@ def test_book_wrong_method(client,
     book_url = '/book/' + str(competition) + '/' + str(club)
     response = client.post(book_url)
     assert response.status_code == 405
+
 
 def test_book_with_clubs_empty(client, mocker,
                                list_of_clubs_file,
@@ -279,14 +306,15 @@ def test_book_with_clubs_empty(client, mocker,
     response = client.get(book_url)
     assert response.status_code == 200
 
+
 def test_book_with_competitions_empty(client, mocker,
-                               list_of_clubs_file,
-                               list_of_competitions_file):
+                                      list_of_clubs_file,
+                                      list_of_competitions_file):
     actual_club = list_of_clubs_file['clubs'][0]
     competition_choose = list_of_competitions_file['competitions'][0]
     club = actual_club["name"]
     competition = competition_choose["name"]
-    mocker.patch.object(server, 'clubs', 
+    mocker.patch.object(server, 'clubs',
                         list_of_clubs_file['clubs'])
     mocker.patch.object(server, 'competitions', [])
     book_url = '/book/' + str(competition) + '/' + str(club)
@@ -295,8 +323,8 @@ def test_book_with_competitions_empty(client, mocker,
 
 
 def test_book_club_not_exists(client, mocker,
-                     list_of_clubs_file,
-                     list_of_competitions_file):
+                              list_of_clubs_file,
+                              list_of_competitions_file):
     club = "fake_club"
     competition = "fake competition"
     mocker.patch.object(server, 'clubs',
@@ -308,12 +336,10 @@ def test_book_club_not_exists(client, mocker,
     assert response.status_code == 200
 
 
-from flask import template_rendered
-from contextlib import contextmanager
-
 @contextmanager
 def captured_templates(app):
     recorded = []
+
     def record(app, template, context, **extra):
         recorded.append((template, context))
         print(app)
@@ -325,9 +351,10 @@ def captured_templates(app):
     finally:
         template_rendered.disconnect(record, app)
 
+
 def test_template_booking_and_parameters(mocker, client,
-                        list_of_clubs_file,
-                        list_of_competitions_file):
+                                         list_of_clubs_file,
+                                         list_of_competitions_file):
     with captured_templates(server.app) as templates:
         actual_club = list_of_clubs_file['clubs'][0]
         competition_choose = list_of_competitions_file['competitions'][0]
@@ -343,8 +370,9 @@ def test_template_booking_and_parameters(mocker, client,
         assert len(templates) == 1
         template, context = templates[0]
         assert template.name == 'booking.html'
-        assert context['club'] == [actual_club]
-        assert context['competition'] == [competition_choose]
+        assert context['club'] == actual_club
+        assert context['competition'] == competition_choose
+
 
 """
 TEST DE LA FONCTION purchasePlaces:
@@ -367,10 +395,10 @@ en enlevant le nombre de places réservées.
 le template welcome.html,
 ainsi que les paramètres club (club actuel)
 et competitions (liste).
-#### Vérifier que la requète est OK 
+#### Vérifier que la requète est OK
 #### Vérifier que la requète en GET n'est pas possible
-#### Vérifier que les paramètres club et competitions 
-sont bien passés au template et vérifier le template passé 
+#### Vérifier que les paramètres club et competitions
+sont bien passés au template et vérifier le template passé
 #### Tester avec une liste de clubs vide
 #### Tester avec une liste de compétitions vide
 #### Tester avec un club invalide
@@ -384,6 +412,7 @@ si il ne reste pas assez de places
 #### Vérifier que la réservation n'est pas possible
 si le club n'a pas assez de places ou réserve plus de 12 places
 """
+
 
 def test_template_welcome_after_booking(mocker, client,
                                         list_of_clubs_file,
@@ -408,15 +437,11 @@ def test_template_welcome_after_booking(mocker, client,
         assert context['club'] == actual_club
         assert context['competitions'] == list_of_competitions_file['competitions']
 
-def test_purchasePlaces_wrong_method(client,
-                                     list_of_clubs_file,
-                                     list_of_competitions_file):
-    actual_club = list_of_clubs_file['clubs'][0]
-    competition_choose = list_of_competitions_file['competitions'][0]
-    club_name = actual_club["name"]
-    competition_name = competition_choose["name"]
+
+def test_purchasePlaces_wrong_method(client):
     response = client.get('/purchasePlaces')
     assert response.status_code == 405
+
 
 def test_purchasePlaces_with_clubs_empty(client, mocker,
                                          list_of_clubs_file,
@@ -434,9 +459,10 @@ def test_purchasePlaces_with_clubs_empty(client, mocker,
     response = client.post('/purchasePlaces', data=form)
     assert response.status_code == 200
 
+
 def test_purchasePlaces_with_competitions_empty(client, mocker,
-                                      list_of_clubs_file,
-                                      list_of_competitions_file):
+                                                list_of_clubs_file,
+                                                list_of_competitions_file):
     actual_club = list_of_clubs_file['clubs'][0]
     competition_choose = list_of_competitions_file['competitions'][0]
     club_name = actual_club["name"]
@@ -449,6 +475,7 @@ def test_purchasePlaces_with_competitions_empty(client, mocker,
             'places': 5}
     response = client.post('/purchasePlaces', data=form)
     assert response.status_code == 200
+
 
 def test_purchasePlaces_club_not_exists(client, mocker,
                                         list_of_clubs_file,
@@ -464,6 +491,7 @@ def test_purchasePlaces_club_not_exists(client, mocker,
             'places': 5}
     response = client.post('/purchasePlaces', data=form)
     assert response.status_code == 200
+
 
 def test_purchasePlaces_update_all_places(mocker, client,
                                           list_of_clubs_file,
@@ -482,7 +510,7 @@ def test_purchasePlaces_update_all_places(mocker, client,
         form = {'club': club_name,
                 'competition': competition_name,
                 'places': 5}
-        response = client.post('/purchasePlaces', data=form)
+        client.post('/purchasePlaces', data=form)
         template, context = templates[0]
         expected_club_value = str(int(club_places) - 5)
         assert context['club']['points'] == expected_club_value
@@ -493,6 +521,7 @@ def test_purchasePlaces_update_all_places(mocker, client,
         else:
             print("Problème avec la compétition envoyée en sortie")
             assert 'magic' == 42
+
 
 def test_purchasePlaces_when_no_place_available(mocker, client,
                                                 list_of_clubs_file,
@@ -512,7 +541,7 @@ def test_purchasePlaces_when_no_place_available(mocker, client,
         form = {'club': club_name,
                 'competition': competition_name,
                 'places': places_booked}
-        response = client.post('/purchasePlaces', data=form)
+        client.post('/purchasePlaces', data=form)
         template, context = templates[0]
         expected_value_for_club = club_places
         expected_value_for_competition = competition_places
@@ -521,6 +550,7 @@ def test_purchasePlaces_when_no_place_available(mocker, client,
         assert context['competition'] == competition_choose
         assert context['competition']['numberOfPlaces'] == expected_value_for_competition
         assert template.name == 'booking.html'
+
 
 def test_purchasePlaces_when_club_owns_not_enough_places(mocker, client,
                                                          list_of_clubs_file,
@@ -540,7 +570,7 @@ def test_purchasePlaces_when_club_owns_not_enough_places(mocker, client,
         form = {'club': club_name,
                 'competition': competition_name,
                 'places': places_booked}
-        response = client.post('/purchasePlaces', data=form)
+        client.post('/purchasePlaces', data=form)
         template, context = templates[0]
         expected_value_for_club = club_places
         expected_value_for_competition = competition_places
@@ -549,6 +579,7 @@ def test_purchasePlaces_when_club_owns_not_enough_places(mocker, client,
         assert context['competition'] == competition_choose
         assert context['competition']['numberOfPlaces'] == expected_value_for_competition
         assert template.name == 'booking.html'
+
 
 def test_purchasePlaces_when_club_wants_too_many_places(mocker, client,
                                                         list_of_clubs_file,
@@ -567,7 +598,7 @@ def test_purchasePlaces_when_club_wants_too_many_places(mocker, client,
         form = {'club': club_name,
                 'competition': competition_name,
                 'places': 13}
-        response = client.post('/purchasePlaces', data=form)
+        client.post('/purchasePlaces', data=form)
         template, context = templates[0]
         expected_value_for_club = club_places
         expected_value_for_competition = competition_places
@@ -576,3 +607,41 @@ def test_purchasePlaces_when_club_wants_too_many_places(mocker, client,
         assert context['competition'] == competition_choose
         assert context['competition']['numberOfPlaces'] == expected_value_for_competition
         assert template.name == 'booking.html'
+
+
+"""
+TEST DE LA FONCTION logout:
+1. Vérifier que la page index est renvoyée
+"""
+
+
+def test_logout_return_index_page(client):
+    response = client.get('/logout')
+    assert response.status_code == 302
+
+
+"""
+TEST DES FONCTIONS _initialize_clubs et _initialize_competitions
+la fonction crée un json à partir d'un dictionnaire
+et retourne une liste vide
+"""
+
+
+def test_initialize_clubs(mocker, tmpdir):
+    the_file = tmpdir.mkdir("fichiers_temporaires").join("clubs.json")
+    mocker.patch.object(server, 'clubs_file',
+                        the_file)
+    return_value = _initialize_clubs()
+    with open(the_file, 'r') as f:
+        assert json.load(f)['clubs'] == []
+    assert return_value == []
+
+
+def test_initialize_competition(mocker, tmpdir):
+    the_file = tmpdir.mkdir("fichiers_temporaires").join("competitions.json")
+    mocker.patch.object(server, 'competitions_file',
+                        the_file)
+    return_value = _initialize_competitions()
+    with open(the_file, 'r') as f:
+        assert json.load(f)['competitions'] == []
+    assert return_value == []
