@@ -14,8 +14,15 @@
     <title>Booking for {{competition['name']}} || GUDLFT</title>
 </head>
 <body>
+    <p>Id for your club: {{club['email']}}, points available: {{club['points']}}</p>
+    <p> 
+        <a href="{{url_for('logout')}}">Logout</a> | 
+        <a href="{{ url_for('showClubsPoints',club=club['name']) }}">
+            See the dashboard with points for all clubs
+        </a>
+    </p>
     <h2>{{competition['name']}}</h2>
-    Places available: {{competition['numberOfPlaces']}}
+    <p>Places available for this competition: {{competition['numberOfPlaces']}}</p>
     <form action="/purchasePlaces" method="post">
         <input type="hidden" name="club" value="{{club['name']}}">
         <input type="hidden" name="competition" value="{{competition['name']}}">

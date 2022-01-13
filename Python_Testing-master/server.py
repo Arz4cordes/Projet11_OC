@@ -108,7 +108,23 @@ def purchasePlaces():
                 return render_template('welcome.html', club=the_club, competitions=competitions)
 
 
-# TODO: Add route for points display
+@app.route('/showClubsPoints/<club>')
+def showClubsPoints(club):
+    # club est vide si on vient de l'index /
+    # club est le nom du club connecté
+    #   si on vient de /showSummary ou de /book/...
+    the_club = [c for c in clubs if c['name'] == club]
+    print("CLUBS")
+    for c in clubs:
+        print(c['name'])
+    print("CLUB NAME", club)
+    print(the_club)
+    if the_club:
+        actual_club = the_club[0]
+        print("club actuel", actual_club)
+    else:
+        actual_club = ""
+    return render_template('dashboard.html', actual_club=actual_club, competitions=competitions, clubs=clubs)
 
 
 @app.route('/logout')

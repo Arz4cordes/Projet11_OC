@@ -1,0 +1,29 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | GUDLFT Registration</title>
+</head>
+<body>
+    <h1>Welcome to the GUDLFT Dashboard.</h1>
+    {% if actual_club %}
+        <h2>Id for your club: {{actual_club['email']}} </h2>
+        <p><a href="{{url_for('logout')}}">Logout</a></p>
+        <p> <form action="/showSummary" method="post">
+                <input type="hidden" name="email" value="{{actual_club['email']}}"/>
+                <button type="submit">Go to the home page</button>
+            </form>
+        </p>
+    {% endif %}
+    <h2>Here you can find all the clubs and their points:</h2>
+    <ul>
+        {% for club in clubs %}
+        <li>
+            Club: {{club['name']}}<br />
+            Points restants pour le club: {{ club['points'] }}<br />
+        </li>
+        <hr />
+        {% endfor %}
+    </ul>
+</body>
+</html>
