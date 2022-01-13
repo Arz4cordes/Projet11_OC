@@ -1,5 +1,4 @@
 import json
-import os
 
 import pytest
 from flask import request, template_rendered
@@ -617,6 +616,11 @@ TEST DE LA FONCTION logout:
 
 def test_logout_return_index_page(client):
     response = client.get('/logout')
+    print('### URL ####')
+    print(response.data)
+    print(response.content_type)
+    print(response.headers)
+    print(str(response.data))
     assert response.status_code == 302
 
 
