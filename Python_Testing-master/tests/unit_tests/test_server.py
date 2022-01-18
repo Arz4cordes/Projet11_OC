@@ -30,6 +30,11 @@ def list_of_clubs_file():
 
 
 @pytest.fixture
+def club_connected(list_of_clubs_file):
+    return list_of_clubs_file['clubs'][0]
+
+
+@pytest.fixture
 def list_of_competitions_file():
     # Renvoie un dictionnaire avec la clé 'competitions'
     # correspondant au contenu du fichier json
@@ -48,6 +53,16 @@ def list_of_competitions_file():
         ]
     }
     return the_competitions
+
+
+@pytest.fixture
+def list_of_competitions(list_of_competitions_file):
+    return list_of_competitions_file['competitions']
+
+
+@pytest.fixture
+def competition_to_book(list_of_competitions):
+    return list_of_competitions[0]
 
 
 @pytest.fixture
@@ -123,13 +138,15 @@ class MockResponseCompetitions:
         return list_of_competitions_file
 
 
-def test_loadCompetitions_return_listOfCompetitions(monkeypatch, list_of_competitions_file):
+def test_loadCompetitions_return_listOfCompetitions(monkeypatch,
+                                                    list_of_competitions_file,
+                                                    list_of_competitions):
 
     def mock_get(*args, **kwargs):
         return MockResponseCompetitions().load(list_of_competitions_file)
 
     monkeypatch.setattr(json, "load", mock_get)
-    expected_value = list_of_competitions_file['competitions']
+    expected_value = list_of_competitions
     assert loadCompetitions() == expected_value
 
 
@@ -199,8 +216,8 @@ si un email incorrect est entré
 """
 
 
-def test_showSummary_status(mocker, client, list_of_clubs_file):
-    existing_club = list_of_clubs_file['clubs'][0]
+def test_showSummary_status(mocker, client, list_of_clubs_file, club_connected):
+    existing_club = club_connected
     correct_email = existing_club['email']
     mocker.patch.object(server, 'clubs', list_of_clubs_file['clubs'])
     form = {'email': correct_email}
@@ -212,29 +229,30 @@ def test_showSummary_status(mocker, client, list_of_clubs_file):
 def test_showSummary_return_parameters(mocker,
                                        client,
                                        list_of_clubs_file,
-                                       list_of_competitions_file):
+                                       list_of_competitions,
+                                       club_connected):
 
-    def mockreturn(list_of_clubs_file, list_of_competitions_file):
-        the_club = list_of_clubs_file['clubs'][0]
-        the_competitions = list_of_competitions_file['competitions']
+    def mockreturn(list_of_competitions, club_connected):
+        the_club = club_connected
+        the_competitions = list_of_competitions
         parameters = {
             'club': the_club,
             'competitions': the_competitions
         }
         return parameters
 
-    existing_club = list_of_clubs_file['clubs'][0]
+    existing_club = club_connected
     correct_email = existing_club['email']
     mocker.patch.object(server, 'clubs', list_of_clubs_file['clubs'])
-    mocker.patch.object(server, 'competitions', list_of_competitions_file['competitions'])
+    mocker.patch.object(server, 'competitions', list_of_competitions)
     mocker.patch('server.render_template',
-                 return_value=mockreturn(list_of_clubs_file,
-                                         list_of_competitions_file))
+                 return_value=mockreturn(list_of_competitions,
+                                         club_connected))
     form = {'email': correct_email}
     client.post('/showSummary', data=form)
     expected_value = {
         'club': existing_club,
-        'competitions': list_of_competitions_file['competitions']
+        'competitions': list_of_competitions
     }
     assert showSummary() == expected_value
 
@@ -280,10 +298,10 @@ invalides
 
 
 def test_book_wrong_method(client,
-                           list_of_clubs_file,
-                           list_of_competitions_file):
-    actual_club = list_of_clubs_file['clubs'][0]
-    competition_choose = list_of_competitions_file['competitions'][0]
+                           competition_to_book,
+                           club_connected):
+    actual_club = club_connected
+    competition_choose = competition_to_book
     club = actual_club["name"]
     competition = competition_choose["name"]
     book_url = '/book/' + str(competition) + '/' + str(club)
@@ -292,15 +310,16 @@ def test_book_wrong_method(client,
 
 
 def test_book_with_clubs_empty(client, mocker,
-                               list_of_clubs_file,
-                               list_of_competitions_file):
-    actual_club = list_of_clubs_file['clubs'][0]
-    competition_choose = list_of_competitions_file['competitions'][0]
+                               list_of_competitions,
+                               competition_to_book,
+                               club_connected):
+    actual_club = club_connected
+    competition_choose = competition_to_book
     club = actual_club["name"]
     competition = competition_choose["name"]
     mocker.patch.object(server, 'clubs', [])
     mocker.patch.object(server, 'competitions',
-                        list_of_competitions_file['competitions'])
+                        list_of_competitions)
     book_url = '/book/' + str(competition) + '/' + str(club)
     response = client.get(book_url)
     assert response.status_code == 200
@@ -308,9 +327,11 @@ def test_book_with_clubs_empty(client, mocker,
 
 def test_book_with_competitions_empty(client, mocker,
                                       list_of_clubs_file,
-                                      list_of_competitions_file):
-    actual_club = list_of_clubs_file['clubs'][0]
-    competition_choose = list_of_competitions_file['competitions'][0]
+                                      list_of_competitions_file,
+                                      competition_to_book,
+                                      club_connected):
+    actual_club = club_connected
+    competition_choose = competition_to_book
     club = actual_club["name"]
     competition = competition_choose["name"]
     mocker.patch.object(server, 'clubs',
@@ -323,13 +344,13 @@ def test_book_with_competitions_empty(client, mocker,
 
 def test_book_club_not_exists(client, mocker,
                               list_of_clubs_file,
-                              list_of_competitions_file):
+                              list_of_competitions):
     club = "fake_club"
     competition = "fake competition"
     mocker.patch.object(server, 'clubs',
                         list_of_clubs_file['clubs'])
     mocker.patch.object(server, 'competitions',
-                        list_of_competitions_file['competitions'])
+                        list_of_competitions)
     book_url = '/book/' + str(competition) + '/' + str(club)
     response = client.get(book_url)
     assert response.status_code == 200
@@ -353,16 +374,18 @@ def captured_templates(app):
 
 def test_template_booking_and_parameters(mocker, client,
                                          list_of_clubs_file,
-                                         list_of_competitions_file):
+                                         list_of_competitions,
+                                         competition_to_book,
+                                         club_connected):
     with captured_templates(server.app) as templates:
-        actual_club = list_of_clubs_file['clubs'][0]
-        competition_choose = list_of_competitions_file['competitions'][0]
+        actual_club = club_connected
+        competition_choose = competition_to_book
         club = actual_club["name"]
         competition = competition_choose["name"]
         mocker.patch.object(server, 'clubs',
                             list_of_clubs_file['clubs'])
         mocker.patch.object(server, 'competitions',
-                            list_of_competitions_file['competitions'])
+                            list_of_competitions)
         book_url = '/book/' + str(competition) + '/' + str(club)
         response = client.get(book_url)
         assert response.status_code == 200
@@ -415,16 +438,18 @@ si le club n'a pas assez de places ou réserve plus de 12 places
 
 def test_template_welcome_after_booking(mocker, client,
                                         list_of_clubs_file,
-                                        list_of_competitions_file):
+                                        list_of_competitions,
+                                        competition_to_book,
+                                        club_connected):
     with captured_templates(server.app) as templates:
-        actual_club = list_of_clubs_file['clubs'][0]
-        competition_choose = list_of_competitions_file['competitions'][0]
+        actual_club = club_connected
+        competition_choose = competition_to_book
         club_name = actual_club["name"]
         competition_name = competition_choose["name"]
         mocker.patch.object(server, 'clubs',
                             list_of_clubs_file['clubs'])
         mocker.patch.object(server, 'competitions',
-                            list_of_competitions_file['competitions'])
+                            list_of_competitions)
         form = {'club': club_name,
                 'competition': competition_name,
                 'places': 5}
@@ -434,7 +459,7 @@ def test_template_welcome_after_booking(mocker, client,
         template, context = templates[0]
         assert template.name == 'welcome.html'
         assert context['club'] == actual_club
-        assert context['competitions'] == list_of_competitions_file['competitions']
+        assert context['competitions'] == list_of_competitions
 
 
 def test_purchasePlaces_wrong_method(client):
@@ -443,15 +468,16 @@ def test_purchasePlaces_wrong_method(client):
 
 
 def test_purchasePlaces_with_clubs_empty(client, mocker,
-                                         list_of_clubs_file,
-                                         list_of_competitions_file):
-    actual_club = list_of_clubs_file['clubs'][0]
-    competition_choose = list_of_competitions_file['competitions'][0]
+                                         list_of_competitions,
+                                         competition_to_book,
+                                         club_connected):
+    actual_club = club_connected
+    competition_choose = competition_to_book
     club_name = actual_club["name"]
     competition_name = competition_choose["name"]
     mocker.patch.object(server, 'clubs', [])
     mocker.patch.object(server, 'competitions',
-                        list_of_competitions_file['competitions'])
+                        list_of_competitions)
     form = {'club': club_name,
             'competition': competition_name,
             'places': 5}
@@ -461,9 +487,10 @@ def test_purchasePlaces_with_clubs_empty(client, mocker,
 
 def test_purchasePlaces_with_competitions_empty(client, mocker,
                                                 list_of_clubs_file,
-                                                list_of_competitions_file):
-    actual_club = list_of_clubs_file['clubs'][0]
-    competition_choose = list_of_competitions_file['competitions'][0]
+                                                competition_to_book,
+                                                club_connected):
+    actual_club = club_connected
+    competition_choose = competition_to_book
     club_name = actual_club["name"]
     competition_name = competition_choose["name"]
     mocker.patch.object(server, 'clubs',
@@ -478,13 +505,13 @@ def test_purchasePlaces_with_competitions_empty(client, mocker,
 
 def test_purchasePlaces_club_not_exists(client, mocker,
                                         list_of_clubs_file,
-                                        list_of_competitions_file):
+                                        list_of_competitions):
     club = "fake_club"
     competition = "fake competition"
     mocker.patch.object(server, 'clubs',
                         list_of_clubs_file['clubs'])
     mocker.patch.object(server, 'competitions',
-                        list_of_competitions_file['competitions'])
+                        list_of_competitions)
     form = {'club': club,
             'competition': competition,
             'places': 5}
@@ -494,18 +521,20 @@ def test_purchasePlaces_club_not_exists(client, mocker,
 
 def test_purchasePlaces_update_all_places(mocker, client,
                                           list_of_clubs_file,
-                                          list_of_competitions_file):
+                                          list_of_competitions,
+                                          competition_to_book,
+                                          club_connected):
     with captured_templates(server.app) as templates:
-        actual_club = list_of_clubs_file['clubs'][0]
+        actual_club = club_connected
         club_places = actual_club['points']
-        competition_choose = list_of_competitions_file['competitions'][0]
+        competition_choose = competition_to_book
         competition_places = competition_choose['numberOfPlaces']
         club_name = actual_club["name"]
         competition_name = competition_choose["name"]
         mocker.patch.object(server, 'clubs',
                             list_of_clubs_file['clubs'])
         mocker.patch.object(server, 'competitions',
-                            list_of_competitions_file['competitions'])
+                            list_of_competitions)
         form = {'club': club_name,
                 'competition': competition_name,
                 'places': 5}
@@ -524,18 +553,20 @@ def test_purchasePlaces_update_all_places(mocker, client,
 
 def test_purchasePlaces_when_no_place_available(mocker, client,
                                                 list_of_clubs_file,
-                                                list_of_competitions_file):
+                                                list_of_competitions,
+                                                competition_to_book,
+                                                club_connected):
     with captured_templates(server.app) as templates:
-        actual_club = list_of_clubs_file['clubs'][0]
+        actual_club = club_connected
         club_places = actual_club['points']
-        competition_choose = list_of_competitions_file['competitions'][0]
+        competition_choose = competition_to_book
         competition_places = competition_choose['numberOfPlaces']
         club_name = actual_club["name"]
         competition_name = competition_choose["name"]
         mocker.patch.object(server, 'clubs',
                             list_of_clubs_file['clubs'])
         mocker.patch.object(server, 'competitions',
-                            list_of_competitions_file['competitions'])
+                            list_of_competitions)
         places_booked = int(competition_places) + 1
         form = {'club': club_name,
                 'competition': competition_name,
@@ -553,18 +584,19 @@ def test_purchasePlaces_when_no_place_available(mocker, client,
 
 def test_purchasePlaces_when_club_owns_not_enough_places(mocker, client,
                                                          list_of_clubs_file,
-                                                         list_of_competitions_file):
+                                                         list_of_competitions,
+                                                         competition_to_book):
     with captured_templates(server.app) as templates:
         actual_club = list_of_clubs_file['clubs'][1]
         club_places = actual_club['points']
-        competition_choose = list_of_competitions_file['competitions'][0]
+        competition_choose = competition_to_book
         competition_places = competition_choose['numberOfPlaces']
         club_name = actual_club["name"]
         competition_name = competition_choose["name"]
         mocker.patch.object(server, 'clubs',
                             list_of_clubs_file['clubs'])
         mocker.patch.object(server, 'competitions',
-                            list_of_competitions_file['competitions'])
+                            list_of_competitions)
         places_booked = int(club_places) + 1
         form = {'club': club_name,
                 'competition': competition_name,
@@ -582,18 +614,20 @@ def test_purchasePlaces_when_club_owns_not_enough_places(mocker, client,
 
 def test_purchasePlaces_when_club_wants_too_many_places(mocker, client,
                                                         list_of_clubs_file,
-                                                        list_of_competitions_file):
+                                                        list_of_competitions,
+                                                        competition_to_book,
+                                                        club_connected):
     with captured_templates(server.app) as templates:
-        actual_club = list_of_clubs_file['clubs'][0]
+        actual_club = club_connected
         club_places = actual_club['points']
-        competition_choose = list_of_competitions_file['competitions'][0]
+        competition_choose = competition_to_book
         competition_places = competition_choose['numberOfPlaces']
         club_name = actual_club["name"]
         competition_name = competition_choose["name"]
         mocker.patch.object(server, 'clubs',
                             list_of_clubs_file['clubs'])
         mocker.patch.object(server, 'competitions',
-                            list_of_competitions_file['competitions'])
+                            list_of_competitions)
         form = {'club': club_name,
                 'competition': competition_name,
                 'places': 13}
@@ -616,11 +650,6 @@ TEST DE LA FONCTION logout:
 
 def test_logout_return_index_page(client):
     response = client.get('/logout')
-    print('### URL ####')
-    print(response.data)
-    print(response.content_type)
-    print(response.headers)
-    print(str(response.data))
     assert response.status_code == 302
 
 
@@ -635,17 +664,11 @@ def test_initialize_clubs(mocker, tmpdir):
     the_file = tmpdir.mkdir("fichiers_temporaires").join("clubs.json")
     mocker.patch.object(server, 'clubs_file',
                         the_file)
-    return_value = _initialize_clubs()
-    with open(the_file, 'r') as f:
-        assert json.load(f)['clubs'] == []
-    assert return_value == []
+    assert _initialize_clubs() == []
 
 
 def test_initialize_competition(mocker, tmpdir):
     the_file = tmpdir.mkdir("fichiers_temporaires").join("competitions.json")
     mocker.patch.object(server, 'competitions_file',
                         the_file)
-    return_value = _initialize_competitions()
-    with open(the_file, 'r') as f:
-        assert json.load(f)['competitions'] == []
-    assert return_value == []
+    assert _initialize_competitions() == []
