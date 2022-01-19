@@ -1,5 +1,3 @@
-import time
-
 from locust import HttpUser, task
 
 
@@ -18,14 +16,12 @@ class ProjectPerfTest(HttpUser):
         (voir cas numéeo 4)
     """
 
-
     @task
     def login_page(self):
         with self.client.get("/",
                              catch_response=True) as response:
             if response.elapsed.total_seconds() > 2:
                 response.failure("Request took too long...")
-
 
     @task(3)
     def home_page(self):
@@ -36,7 +32,6 @@ class ProjectPerfTest(HttpUser):
             if response.elapsed.total_seconds() > 2:
                 response.failure("Request took too long...")
 
-
     @task(2)
     def booking_page(self):
         with self.client.get('/book/"Spring Festival"/"Simply Lift"',
@@ -44,7 +39,6 @@ class ProjectPerfTest(HttpUser):
             if response.elapsed.total_seconds() > 2:
                 response.failure("Request took too long...")
 
-    
     @task(2)
     def home_page_after_booking(self):
         form = {'club': "Simply Lift",
@@ -56,17 +50,15 @@ class ProjectPerfTest(HttpUser):
             if response.elapsed.total_seconds() > 5:
                 response.failure("Request took too long...")
 
-
     @task
     def logout_page(self):
         with self.client.get('/logout', catch_response=True) as response:
             if response.elapsed.total_seconds() > 2:
                 response.failure("Request took too long...")
-    
 
     @task(2)
     def points_dashboard(self):
         with self.client.get('/showClubsPoints/"Simply Lift"',
-                              catch_response=True) as response:
+                             catch_response=True) as response:
             if response.elapsed.total_seconds() > 2:
                 response.failure("Request took too long...")

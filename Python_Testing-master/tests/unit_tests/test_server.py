@@ -262,7 +262,6 @@ def test_showSummary_club_not_exists(mocker, client, list_of_clubs_file):
     form = {'email': 'not_in_clubs@mail.com'}
     response = client.post('/showSummary',
                            data=form)
-    print(response.status_code)
     assert response.status_code >= 300
 
 
@@ -362,9 +361,6 @@ def captured_templates(app):
 
     def record(app, template, context, **extra):
         recorded.append((template, context))
-        print(app)
-        print("TEMPLATE, CONTEXT")
-        print(recorded)
     template_rendered.connect(record, app)
     try:
         yield recorded
