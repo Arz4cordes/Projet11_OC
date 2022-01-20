@@ -7,11 +7,10 @@
 <body>
     <h1>Welcome to the GUDLFT Dashboard.</h1>
     {% if actual_club %}
-        <h2>Id for your club: {{actual_club['email']}} </h2>
-        <p><a href="{{url_for('logout')}}">Logout</a></p>
+        <h2>Id for your club: {{actual_club['email']}} | <a href="{{url_for('logout')}}">Logout</a></h2>
         <p> <form action="/showSummary" method="post">
                 <input type="hidden" name="email" value="{{actual_club['email']}}"/>
-                <button type="submit">Go to the home page</button>
+                <button type="submit">Go to the page of competitions</button>
             </form>
         </p>
     {% endif %}

@@ -1,33 +1,42 @@
 <html lang="en">
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-        <ul class=flashes>
-        {% for message in messages %}
-            <li><strong>{{ message }}</strong></li>
-        {% endfor %}
-        </ul>
-    {% endif %}
-{% endwith %}
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booking for {{competition['name']}} || GUDLFT</title>
 </head>
 <body>
-    <p>Id for your club: {{club['email']}}, points available: {{club['points']}}</p>
+    <ul id="flashes_msg">
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for message in messages %}
+            <li><strong>{{ message }}</strong></li>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+    </ul>
+    <h1>GUDLFT: Booking for a competition</h1>
+    <h2>Id for your club: {{club['email']}}, points available: 
+        <span id="club_info">{{club['points']}}</span> | 
+        <a href="{{url_for('logout')}}">Logout</a></h2>
     <p> 
-        <a href="{{url_for('logout')}}">Logout</a> | 
-        <a href="{{ url_for('showClubsPoints',club=club['name']) }}">
+        <a href="{{ url_for('showClubsPoints', club=club['name']) }}">
             See the dashboard with points for all clubs
         </a>
     </p>
+    <p> <form action="/showSummary" method="post">
+        <input type="hidden" name="email" value="{{club['email']}}"/>
+        <button type="submit" id="competitions_page">Go to the page of competitions</button>
+    </form>
+    </p>
     <h2>{{competition['name']}}</h2>
-    <p>Places available for this competition: {{competition['numberOfPlaces']}}</p>
+    <p>Places available for this competition: 
+        <span id='comp_info'>{{competition['numberOfPlaces']}}</span></p>
     <form action="/purchasePlaces" method="post">
         <input type="hidden" name="club" value="{{club['name']}}">
         <input type="hidden" name="competition" value="{{competition['name']}}">
         <label for="places">How many places?</label><input type="number" name="places" id=""/>
-        <button type="submit">Book</button>
+        <button type="submit" id="booking">Book</button>
     </form>
 </body>
 </html>

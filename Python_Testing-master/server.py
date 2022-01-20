@@ -118,7 +118,10 @@ def showClubsPoints(club):
         actual_club = the_club[0]
     else:
         actual_club = ""
-    return render_template('dashboard.html', actual_club=actual_club, competitions=competitions, clubs=clubs)
+    return render_template('dashboard.html',
+                            actual_club=actual_club,
+                            competitions=competitions,
+                            clubs=clubs)
 
 
 @app.route('/logout')

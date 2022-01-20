@@ -5,6 +5,7 @@
     <title>Summary | GUDLFT </title>
 </head>
 <body>
+        <h1>GUDLFT: Looking at the list of competitions</h1>
         <h2>Welcome, {{club['email']}} </h2>
         <p>
             <a href="{{url_for('logout')}}">Logout</a> | 
@@ -12,10 +13,9 @@
                 See the dashboard with points for all clubs
             </a>
         </p>
-
+        <ul id='flashes_msg'>
     {% with messages = get_flashed_messages()%}
     {% if messages %}
-        <ul>
        {% for message in messages %}
             <li>{{message}}</li>
         {% endfor %}

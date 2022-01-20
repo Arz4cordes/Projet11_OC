@@ -42,15 +42,23 @@ def choose_competition(driver):
     return True
 
 
-def booking_places(driver, places_to_book):
-    club_info = driver.find_element(By.XPATH, '/html/body/p[1]')
+def booking_places(driver, number_of_places):
+    club_info = driver.find_element(By.ID, 'club_info')
     club_info_content = club_info.text
-    club_points = club_info_content.split('points available: ')[-1]
-    competition_info = driver.find_element(By.XPATH, '/html/body/p[3]')
-    competition_info_content = competition_info.text
-    competition_points = competition_info_content.split('competition: ')[-1]
+    club_points = int(club_info_content)
+    print()
+    print('######## INFOS CLUB ########')
+    print(club_points)
+    print()
+    comp_info = driver.find_element(By.ID, 'comp_info')
+    comp_info_content = comp_info.text
+    competition_points = int(comp_info_content)
+    print()
+    print('######## INFOS COMP ########')
+    print(competition_points)
+    print()
     if competition_points == 0:
-        flash_info = driver.find_element(By.CLASS_NAME, 'flashes')
+        flash_info = driver.find_element(By.ID, 'flashes_msg')
         assert 'This competition is complete !' in flash_info.text
         main_menu_link = driver.find_element(By.PARTIAL_LINK_TEXT, 'main menu')
         main_menu_link.click()
@@ -59,36 +67,41 @@ def booking_places(driver, places_to_book):
     else: 
         places_field = driver.find_element(By.NAME, "places")
         places_field.clear()
-        places_field.send_keys(places_to_book)
+        places_field.send_keys(number_of_places)
         time.sleep(3)
-        form_button = driver.find_element(By.XPATH, "//form/button")
+        form_button = driver.find_element(By.ID, "booking")
         form_button.click()
-        if int(places_to_book) > 12:
-            flash_info = driver.find_element(By.CLASS_NAME, 'flashes')
+        time.sleep(5)
+        places_to_book = int(number_of_places)
+        if places_to_book > 12:
+            print()
+            print('######## INFOS CLICK ########')
+            print(places_to_book)
+            print()
+            flash_info = driver.find_element(By.ID, 'flashes_msg')
             flash_info_content = flash_info.text
             assert "You can't book" in flash_info_content
-            main_menu_link = driver.find_element(By.PARTIAL_LINK_TEXT, 'main menu')
+            main_menu_link = driver.find_element(By.ID, 'competitions_page')
             main_menu_link.click()
             assert 'Summary' in driver.title
             time.sleep(5)
             return True
-        elif int(club_points) < 2:
-            flash_info = driver.find_element(By.CLASS_NAME, 'flashes')
+        elif club_points < 2:
+            flash_info = driver.find_element(By.ID, 'flashes_msg')
             flash_info_content = flash_info.text
             assert "You don't own enough" in flash_info_content
             time.sleep(3)
-            main_menu_link = driver.find_element(By.PARTIAL_LINK_TEXT, 'main menu')
+            main_menu_link = driver.find_element(By.ID, 'competitions_page')
             main_menu_link.click()
             assert 'Summary' in driver.title
             time.sleep(5)
             return True
-        
-        elif int(competition_points) - int(club_points) < 0:
-            flash_info = driver.find_element(By.CLASS_NAME, 'flashes')
+        elif competition_points - places_to_book < 0:
+            flash_info = driver.find_element(By.ID, 'flashes_msg')
             flash_info_content = flash_info.text
             assert "There's not enough" in flash_info_content
             time.sleep(3)
-            main_menu_link = driver.find_element(By.PARTIAL_LINK_TEXT, 'main menu')
+            main_menu_link = driver.find_element(By.ID, 'competitions_page')
             main_menu_link.click()
             assert 'Summary' in driver.title
             time.sleep(5)
@@ -117,7 +130,8 @@ def disconnect_app(driver):
 
 def test_feature_connect_and_book():
     feature_stages = []
-    the_service = Service(executable_path="tests/functionnal_tests/chromedriver_windows/chromedriver")
+    cd_path = "tests/functionnal_tests/chromedriver_windows/chromedriver"
+    the_service = Service(executable_path=cd_path)
     driver = webdriver.Chrome(service=the_service)
     driver.maximize_window()
     driver.get("http://127.0.0.1:5000/")
@@ -137,7 +151,8 @@ def test_feature_connect_and_book():
 
 def test_feature_dashboard_and_points_limits():
     feature_stages = []
-    the_service = Service(executable_path="tests/functionnal_tests/chromedriver_windows/chromedriver")
+    cd_path = "tests/functionnal_tests/chromedriver_windows/chromedriver"
+    the_service = Service(executable_path=cd_path)
     driver = webdriver.Chrome(service=the_service)
     driver.maximize_window()
     driver.get("http://127.0.0.1:5000//showClubsPoints/''")
@@ -148,7 +163,8 @@ def test_feature_dashboard_and_points_limits():
     feature_stages.append(registration(driver))
     feature_stages.append(choose_competition(driver))
     feature_stages.append(booking_places(driver, "15"))
-    feature_stages.append(choose_competition(driver, "2"))
+    feature_stages.append(choose_competition(driver))
+    feature_stages.append(booking_places(driver, "2"))
     feature_stages.append(looking_for_dashboard_after_booking(driver))
     assert "Dashboard" in driver.title
     time.sleep(5)
