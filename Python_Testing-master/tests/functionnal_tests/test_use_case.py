@@ -46,17 +46,9 @@ def booking_places(driver, number_of_places):
     club_info = driver.find_element(By.ID, 'club_info')
     club_info_content = club_info.text
     club_points = int(club_info_content)
-    print()
-    print('######## INFOS CLUB ########')
-    print(club_points)
-    print()
     comp_info = driver.find_element(By.ID, 'comp_info')
     comp_info_content = comp_info.text
     competition_points = int(comp_info_content)
-    print()
-    print('######## INFOS COMP ########')
-    print(competition_points)
-    print()
     if competition_points == 0:
         flash_info = driver.find_element(By.ID, 'flashes_msg')
         assert 'This competition is complete !' in flash_info.text
@@ -74,10 +66,6 @@ def booking_places(driver, number_of_places):
         time.sleep(5)
         places_to_book = int(number_of_places)
         if places_to_book > 12:
-            print()
-            print('######## INFOS CLICK ########')
-            print(places_to_book)
-            print()
             flash_info = driver.find_element(By.ID, 'flashes_msg')
             flash_info_content = flash_info.text
             assert "You can't book" in flash_info_content
@@ -172,6 +160,6 @@ def test_feature_dashboard_and_points_limits():
     driver.close()
     time.sleep(3)
     print()
-    print("######## ETAPES DU TEST FONCTIONNEL 1 ########")
+    print("######## ETAPES DU TEST FONCTIONNEL 2 ########")
     print(feature_stages)
     print()

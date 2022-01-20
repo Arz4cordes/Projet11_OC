@@ -1,4 +1,6 @@
 import json
+import time
+import os
 
 import pytest
 from flask import request, template_rendered
@@ -6,32 +8,6 @@ from contextlib import contextmanager
 import server
 from server import loadClubs, loadCompetitions, showSummary, \
                    _initialize_clubs, _initialize_competitions
-
-
-@pytest.fixture
-def list_of_clubs_file():
-    # Renvoie un dictionnaire avec la clé 'clubs'
-    # correspondant au contenu du fichier json
-    the_clubs = {
-        "clubs": [
-            {
-                "name": "myclub",
-                "email": "abc@mybox.com",
-                "points": "25"
-            },
-            {
-                "name": "otherclub",
-                "email": "xyz@mybox.fr",
-                "points": "3"
-            }
-        ]
-    }
-    return the_clubs
-
-
-@pytest.fixture
-def club_connected(list_of_clubs_file):
-    return list_of_clubs_file['clubs'][0]
 
 
 @pytest.fixture
@@ -63,6 +39,36 @@ def list_of_competitions(list_of_competitions_file):
 @pytest.fixture
 def competition_to_book(list_of_competitions):
     return list_of_competitions[0]
+
+
+@pytest.fixture
+def list_of_clubs_file(list_of_competitions):
+    # Renvoie un dictionnaire avec la clé 'clubs'
+    # correspondant au contenu du fichier json
+    the_clubs = {
+        "clubs": [
+            {
+                "name": "myclub",
+                "email": "abc@mybox.com",
+                "points": "25"
+            },
+            {
+                "name": "otherclub",
+                "email": "xyz@mybox.fr",
+                "points": "3"
+            }
+        ]
+    }
+    for c in the_clubs["clubs"]:
+        c['reserved_places'] = {}
+        for comp in list_of_competitions:
+            c['reserved_places'][comp['name']] = 0
+    return the_clubs
+
+
+@pytest.fixture
+def club_connected(list_of_clubs_file):
+    return list_of_clubs_file['clubs'][0]
 
 
 @pytest.fixture
@@ -657,14 +663,22 @@ et retourne une liste vide
 
 
 def test_initialize_clubs(mocker, tmpdir):
+
+    def mock_get(the_file):
+        return open(the_file, 'w')
+
     the_file = tmpdir.mkdir("fichiers_temporaires").join("clubs.json")
-    mocker.patch.object(server, 'clubs_file',
-                        the_file)
+    mocker.patch('server.open', return_value=mock_get(the_file))
     assert _initialize_clubs() == []
 
 
 def test_initialize_competition(mocker, tmpdir):
+
+    def mock_get(the_file):
+        return open(the_file, 'w')
+
     the_file = tmpdir.mkdir("fichiers_temporaires").join("competitions.json")
-    mocker.patch.object(server, 'competitions_file',
-                        the_file)
+    with open(the_file, 'w') as f:
+        json.dump({'world': 42}, f, indent=4)
+    mocker.patch('server.open', return_value=mock_get(the_file))
     assert _initialize_competitions() == []

@@ -6,13 +6,13 @@ from flask import Flask, render_template, \
 
 def _initialize_clubs():
     data = {'clubs': []}
-    with open(clubs_file, 'w') as club_file:
+    with open('clubs.json' , 'w') as club_file:
         json.dump(data, club_file, indent=4)
     return []
 
 
 def loadClubs():
-    with open(clubs_file) as c:
+    with open('clubs.json') as c:
         try:
             listOfClubs = json.load(c)['clubs']
             # listOfClubs est une liste de dictionnaires avec les clés name, email, points
@@ -25,13 +25,13 @@ def loadClubs():
 
 def _initialize_competitions():
     data = {'competitions': []}
-    with open(competitions_file, 'w') as comp_file:
+    with open('competitions.json', 'w') as comp_file:
         json.dump(data, comp_file, indent=4)
     return []
 
 
 def loadCompetitions():
-    with open(competitions_file) as comps:
+    with open('competitions.json') as comps:
         try:
             listOfCompetitions = json.load(comps)['competitions']
             return listOfCompetitions
@@ -40,14 +40,20 @@ def loadCompetitions():
             listOfCompetitions = _initialize_competitions()
             return listOfCompetitions
 
+def clubs_with_comp_keys(the_clubs, competitions):
+    for c in the_clubs:
+        c['reserved_places'] = {}
+        for comp in competitions:
+            c['reserved_places'][comp['name']] = 0
+    return the_clubs
+
 
 app = Flask(__name__)
 app.secret_key = 'something_special'
-competitions_file = 'competitions.json'
-clubs_file = 'clubs.json'
-competitions = loadCompetitions()
-clubs = loadClubs()
 
+competitions = loadCompetitions()
+only_clubs = loadClubs()
+clubs = clubs_with_comp_keys(only_clubs, competitions)
 
 @app.route('/')
 def index():
@@ -87,25 +93,38 @@ def purchasePlaces():
     else:
         the_competition = competition[0]
         the_club = club[0]
+        competition_name = the_competition['name']
+        already_reserved = the_club['reserved_places'][competition_name]
         placesRequired = int(request.form['places'])
-        new_club_points = int(the_club['points']) - placesRequired
-        if placesRequired > 12:
+        total_places_reserved = placesRequired + already_reserved
+        if total_places_reserved > 12:
             flash("You can't book more than 12 places for a competition !")
-            return render_template('booking.html', club=the_club, competition=the_competition)
-        elif new_club_points < 0:
+            return render_template('booking.html',
+                                   club=the_club,
+                                   competition=the_competition)
+        actual_club_points = int(the_club['points'])
+        actual_competition_points = int(the_competition['numberOfPlaces'])
+        new_club_points = actual_club_points - placesRequired
+        new_competition_points = actual_competition_points - placesRequired
+        if new_club_points < 0:
             flash("You don't own enough points to book all these places")
-            return render_template('booking.html', club=the_club, competition=the_competition)
-        else:
-            new_competition_points = int(the_competition['numberOfPlaces']) - placesRequired
-            if new_competition_points < 0:
+            return render_template('booking.html',
+                                   club=the_club,
+                                   competition=the_competition)
+        elif new_competition_points < 0:
                 flash("There's not enough places in this competition \n \
                     to book all these places")
-                return render_template('booking.html', club=the_club, competition=the_competition)
-            else:
-                the_competition['numberOfPlaces'] = str(new_competition_points)
-                the_club['points'] = str(new_club_points)
-                flash('Great-booking complete!')
-                return render_template('welcome.html', club=the_club, competitions=competitions)
+                return render_template('booking.html',
+                                       club=the_club,
+                                       competition=the_competition)
+        else:
+            the_competition['numberOfPlaces'] = str(new_competition_points)
+            the_club['points'] = str(new_club_points)
+            the_club['reserved_places'][competition_name] = total_places_reserved
+            flash('Great-booking complete!')
+            return render_template('welcome.html',
+                                   club=the_club,
+                                   competitions=competitions)
 
 
 @app.route('/showClubsPoints/<club>')
