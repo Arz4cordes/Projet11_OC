@@ -16,14 +16,16 @@
     {% endwith %}
     </ul>
     <h1>GUDLFT: Booking for a competition</h1>
-    <h2>Id for your club: {{club['email']}}, points available: 
-        <span id="club_info">{{club['points']}}</span> | 
-        <a href="{{url_for('logout')}}">Logout</a></h2>
-    <p> 
+    <h3>Id for your club: {{club['email']}} | 
+        <a href="{{url_for('logout')}}">Logout</a>
+    </h3>
+    <p>Your points available: 
+        <span id="club_info">{{club['points']}}</span></p>
+    <p>
         <a href="{{ url_for('showClubsPoints', club=club['name']) }}">
             See the dashboard with points for all clubs
         </a>
-    </p>
+    </p> 
     <p> <form action="/showSummary" method="post">
         <input type="hidden" name="email" value="{{club['email']}}"/>
         <button type="submit" id="competitions_page">Go to the page of competitions</button>

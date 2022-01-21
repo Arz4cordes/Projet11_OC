@@ -6,14 +6,23 @@
 </head>
 <body>
     <h1>Welcome to the GUDLFT Dashboard.</h1>
-    {% if actual_club %}
-        <h2>Id for your club: {{actual_club['email']}} | <a href="{{url_for('logout')}}">Logout</a></h2>
-        <p> <form action="/showSummary" method="post">
-                <input type="hidden" name="email" value="{{actual_club['email']}}"/>
-                <button type="submit">Go to the page of competitions</button>
-            </form>
+    {% if actual_club['name'] == 'offline' %}
+        <p>
+            <a href="{{url_for('index')}}">Back to the registration page</a>
         </p>
+    {% elif actual_club %}
+        <h3>Id for your club: {{actual_club['email']}} | 
+            <a href="{{url_for('logout')}}">Logout</a>
+        </h3>
+        <p> <form action="/showSummary" method="post">
+            <input type="hidden" name="email" value="{{actual_club['email']}}"/>
+            <button type="submit">Go to the page of competitions</button>
+        </form>
+        </p>
+    {% else %}
+        <p></p>
     {% endif %}
+    
     <h2>Here you can find all the clubs and their points:</h2>
     <ul>
         {% for club in clubs %}

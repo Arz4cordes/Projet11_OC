@@ -23,6 +23,14 @@ Some use cases:
 """
 
 
+def looking_for_dashboard_before_connect(driver):
+    dashboard_link = driver.find_element(By.PARTIAL_LINK_TEXT, "dashboard")
+    dashboard_link.click()
+    assert "Dashboard" in driver.title
+    time.sleep(5)
+    return True
+
+
 def registration(driver):
     email_field = driver.find_element(By.NAME, "email")
     email_field.clear()
@@ -52,7 +60,7 @@ def booking_places(driver, number_of_places):
     if competition_points == 0:
         flash_info = driver.find_element(By.ID, 'flashes_msg')
         assert 'This competition is complete !' in flash_info.text
-        main_menu_link = driver.find_element(By.PARTIAL_LINK_TEXT, 'main menu')
+        main_menu_link = driver.find_element(By.ID, 'competitions_page')
         main_menu_link.click()
         assert 'Summary' in driver.title
         return True
@@ -74,7 +82,7 @@ def booking_places(driver, number_of_places):
             assert 'Summary' in driver.title
             time.sleep(5)
             return True
-        elif club_points < 2:
+        elif club_points < places_to_book:
             flash_info = driver.find_element(By.ID, 'flashes_msg')
             flash_info_content = flash_info.text
             assert "You don't own enough" in flash_info_content
@@ -143,9 +151,10 @@ def test_feature_dashboard_and_points_limits():
     the_service = Service(executable_path=cd_path)
     driver = webdriver.Chrome(service=the_service)
     driver.maximize_window()
-    driver.get("http://127.0.0.1:5000//showClubsPoints/''")
-    assert "Dashboard" in driver.title
+    driver.get("http://127.0.0.1:5000/")
+    assert "Registration" in driver.title
     time.sleep(5)
+    feature_stages.append(looking_for_dashboard_before_connect(driver))
     driver.get("http://127.0.0.1:5000/")
     assert "Registration" in driver.title
     feature_stages.append(registration(driver))

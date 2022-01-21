@@ -6,9 +6,13 @@
 </head>
 <body>
         <h1>GUDLFT: Looking at the list of competitions</h1>
-        <h2>Welcome, {{club['email']}} </h2>
+        <h3>Welcome, {{club['email']}}  | 
+            <a href="{{url_for('logout')}}">Logout</a>
+        </h3>
+        <p>Your points available: 
+            <span id="club_info">{{club['points']}}</span></p>
         <p>
-            <a href="{{url_for('logout')}}">Logout</a> | 
+        <p>
             <a href="{{ url_for('showClubsPoints',club=club['name']) }}">
                 See the dashboard with points for all clubs
             </a>

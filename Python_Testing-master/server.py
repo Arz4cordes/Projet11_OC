@@ -132,15 +132,22 @@ def showClubsPoints(club):
     # club est vide si on vient de l'index /
     # club est le nom du club connecté
     #   si on vient de /showSummary ou de /book/...
-    the_club = [c for c in clubs if c['name'] == club]
-    if the_club:
-        actual_club = the_club[0]
+    if club == 'offline':
+        actual_club = {'name': 'offline'}
+        return render_template('dashboard.html',
+                                actual_club=actual_club,
+                                clubs=clubs)
     else:
-        actual_club = ""
-    return render_template('dashboard.html',
-                            actual_club=actual_club,
-                            competitions=competitions,
-                            clubs=clubs)
+        the_club = [c for c in clubs if c['name'] == club]
+        if the_club:
+            actual_club = the_club[0]
+            return render_template('dashboard.html',
+                                   actual_club=actual_club,
+                                   clubs=clubs)
+        else:
+            flash("Something went wrong-please try again")
+            return redirect(url_for('index'))
+
 
 
 @app.route('/logout')
