@@ -152,4 +152,5 @@ def showClubsPoints(club):
 
 @app.route('/logout')
 def logout():
+    flash('You are now disconnected, thank you for your visit here !')
     return redirect(url_for('index'))

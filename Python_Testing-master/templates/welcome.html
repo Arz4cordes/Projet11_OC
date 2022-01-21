@@ -35,8 +35,10 @@
             Number of Places: {{comp['numberOfPlaces']}}
             {%if comp['numberOfPlaces']|int >0%}
             <a href="{{ url_for('book',competition=comp['name'],club=club['name']) }}">Book Places</a>
+            {% else %}
+            <p>This competition {{comp['name']}} is now complete.</p>
             {%endif%}
-        </li>
+        </li><br/>
         {% endfor %}
     </ul>
     {%endwith%}
