@@ -33,7 +33,7 @@ concernant une application d'inscription à des tournois.
         b) Une mise à jour du nombre total de points doit être effectuée en 2 secondes maximum
     
 2) Pour télécharger l'application, voici le lien GitHub:
-    https://github.com/Arz4cordes/Projet11_OC/Python_Testing-master
+    https://github.com/Arz4cordes/Projet11_OC
 
 3) Environnement virtuel à mettre en place pour utiliser l'application:
     * installer un environnement virtuel Python avec la commande python -m venv envp11
