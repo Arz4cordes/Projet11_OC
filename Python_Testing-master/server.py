@@ -97,26 +97,26 @@ def purchasePlaces():
         already_reserved = the_club['reserved_places'][competition_name]
         placesRequired = int(request.form['places'])
         total_places_reserved = placesRequired + already_reserved
-        if total_places_reserved > 12:
-            flash("You can't book more than 12 places for a competition !")
-            return render_template('booking.html',
-                                   club=the_club,
-                                   competition=the_competition)
         actual_club_points = int(the_club['points'])
         actual_competition_points = int(the_competition['numberOfPlaces'])
         new_club_points = actual_club_points - placesRequired
         new_competition_points = actual_competition_points - placesRequired
-        if new_club_points < 0:
+        if new_competition_points < 0:
+                flash("There's not enough places in this competition \n \
+                    to book all these places")
+                return render_template('welcome.html',
+                                       club=the_club,
+                                       competitions=competitions)
+        elif new_club_points < 0:
             flash("You don't own enough points to book all these places")
             return render_template('booking.html',
                                    club=the_club,
                                    competition=the_competition)
-        elif new_competition_points < 0:
-                flash("There's not enough places in this competition \n \
-                    to book all these places")
-                return render_template('booking.html',
-                                       club=the_club,
-                                       competition=the_competition)
+        elif total_places_reserved > 12:
+            flash("You can't book more than 12 places for a competition !")
+            return render_template('booking.html',
+                                   club=the_club,
+                                   competition=the_competition)      
         else:
             the_competition['numberOfPlaces'] = str(new_competition_points)
             the_club['points'] = str(new_club_points)

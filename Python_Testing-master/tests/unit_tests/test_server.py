@@ -576,12 +576,10 @@ def test_purchasePlaces_when_no_place_available(mocker, client,
         client.post('/purchasePlaces', data=form)
         template, context = templates[0]
         expected_value_for_club = club_places
-        expected_value_for_competition = competition_places
         assert context['club'] == actual_club
         assert context['club']['points'] == expected_value_for_club
-        assert context['competition'] == competition_choose
-        assert context['competition']['numberOfPlaces'] == expected_value_for_competition
-        assert template.name == 'booking.html'
+        assert context['competitions'] == list_of_competitions
+        assert template.name == 'welcome.html'
 
 
 def test_purchasePlaces_when_club_owns_not_enough_places(mocker, client,
