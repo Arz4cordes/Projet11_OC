@@ -53,7 +53,6 @@ def choose_competition(driver):
         return [True, 1]
     else:
         return [True, 2]
-    
 
 
 def booking_places(driver, number_of_places):

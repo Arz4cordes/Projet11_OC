@@ -6,7 +6,7 @@ from flask import Flask, render_template, \
 
 def _initialize_clubs():
     data = {'clubs': []}
-    with open('clubs.json' , 'w') as club_file:
+    with open('clubs.json', 'w') as club_file:
         json.dump(data, club_file, indent=4)
     return []
 
@@ -40,6 +40,7 @@ def loadCompetitions():
             listOfCompetitions = _initialize_competitions()
             return listOfCompetitions
 
+
 def clubs_with_comp_keys(the_clubs, competitions):
     for c in the_clubs:
         c['reserved_places'] = {}
@@ -54,6 +55,7 @@ app.secret_key = 'something_special'
 competitions = loadCompetitions()
 only_clubs = loadClubs()
 clubs = clubs_with_comp_keys(only_clubs, competitions)
+
 
 @app.route('/')
 def index():
@@ -103,11 +105,11 @@ def purchasePlaces():
         new_club_points = actual_club_points - points_to_substract
         new_competition_places = actual_competition_places - placesRequired
         if new_competition_places < 0:
-                flash("There's not enough places in this competition \n \
-                    to book all these places")
-                return render_template('welcome.html',
-                                       club=the_club,
-                                       competitions=competitions)
+            flash("There's not enough places in this competition \n \
+                  to book all these places")
+            return render_template('welcome.html',
+                                   club=the_club,
+                                   competitions=competitions)
         elif new_club_points < 0:
             flash("You don't own enough points to book all these places")
             return render_template('booking.html',
@@ -117,7 +119,7 @@ def purchasePlaces():
             flash("You can't book more than 12 places for a competition !")
             return render_template('booking.html',
                                    club=the_club,
-                                   competition=the_competition)      
+                                   competition=the_competition)
         else:
             the_competition['numberOfPlaces'] = str(new_competition_places)
             the_club['points'] = str(new_club_points)
@@ -139,8 +141,8 @@ def showClubsPoints(club):
     if club == 'offline':
         actual_club = {'name': 'offline'}
         return render_template('dashboard.html',
-                                actual_club=actual_club,
-                                clubs=clubs)
+                               actual_club=actual_club,
+                               clubs=clubs)
     else:
         the_club = [c for c in clubs if c['name'] == club]
         if the_club:
@@ -151,7 +153,6 @@ def showClubsPoints(club):
         else:
             flash("Something went wrong-please try again")
             return redirect(url_for('index'))
-
 
 
 @app.route('/logout')
