@@ -65,7 +65,12 @@ concernant une application d'inscription à des tournois.
      I) Avec la commande pytest, deux tests fonctionnels seront lancés dans le navigateur Chrome.
         Ces tests fonctionnels sont codés dans le fichier tests_use_case.py du dossier functionnal_test.
         Ce dossier contient aussi un sous-dossier chromedriver_windows avec l'éxecutable chromedriver pour windows.
-        Si vous êtes sous Mac OS ou Linux, voir le premier point de l'annexe 8 ci-dessous.
+        Si vous êtes sous Mac OS ou Linux, voir le premier point de l'annexe 9 ci-dessous.
+        Attention, les deux tests fonctionnels prévoient de réserver un total de 4 places pour le 1er club
+        de la liste du json. Le 1er club du json doit donc posséder initialement un total de 12 points au minimum,
+        et il faut veiller à couper puis relancer le serveur flask avant de lancer à nouveau des tests fonctionnels,
+        sinon les tests fonctionnels échoueront avec des réservations successives.
+        Ceci est dû au choix des cas d'usage, non exhaustifs, illustrés par ces tests fonctionnels. 
     II) De plus, 28 tests fonctionnels seront lancés: ils testent chacune des fonctions écrites dans le fichier principal
         server.py
         Important ! Si vous voulez uniquement lancer les tests unitaires, remplacez la commande pytest par la commande
@@ -83,7 +88,12 @@ concernant une application d'inscription à des tournois.
         En ouvrant dans un navigateur web le fichier index.html situé dans le dossier htmlcov, vous pourrez alors
         avoir le détail des fonctions couvertes par les tests.
 
-8) ANNEXE: liens vers les différentes documentations externes
+8) Des captures d'écran de la couverture de tests avant les modifications sur le projet puis après toutes les améliorations et 
+    corrections de bug sont visibles dans le dossier captures/ecran_performances_couverture
+    Des captures d'écran des tests de performance avec Locust réalisés avant les modifications sur le projet puis après toutes
+    les améliorations et corrections de bug sont visibles dans ce même dossier captures/ecran_performances_couverture
+
+9) ANNEXE: liens vers les différentes documentations externes
 
 ** Si vous êtes sous Mac OS ou Linux, vous devrez installer ChromeDriver pour mac ou linux
 via un téléchargement présent sur cette page:  https://sites.google.com/chromium.org/driver/

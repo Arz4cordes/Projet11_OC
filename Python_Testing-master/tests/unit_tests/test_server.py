@@ -1,6 +1,5 @@
 import json
-import time
-import os
+import math
 
 import pytest
 from flask import request, template_rendered
@@ -19,7 +18,7 @@ def list_of_competitions_file():
             {
                 "name": "allStars",
                 "date": "2021-03-21 20:30:00",
-                "numberOfPlaces": "48"
+                "numberOfPlaces": "60"
             },
             {
                 "name": "juniorsChampionship",
@@ -50,7 +49,7 @@ def list_of_clubs_file(list_of_competitions):
             {
                 "name": "myclub",
                 "email": "abc@mybox.com",
-                "points": "25"
+                "points": "45"
             },
             {
                 "name": "otherclub",
@@ -528,7 +527,7 @@ def test_purchasePlaces_update_all_places(mocker, client,
                                           club_connected):
     with captured_templates(server.app) as templates:
         actual_club = club_connected
-        club_places = actual_club['points']
+        club_points = actual_club['points']
         competition_choose = competition_to_book
         competition_places = competition_choose['numberOfPlaces']
         club_name = actual_club["name"]
@@ -542,7 +541,7 @@ def test_purchasePlaces_update_all_places(mocker, client,
                 'places': 5}
         client.post('/purchasePlaces', data=form)
         template, context = templates[0]
-        expected_club_value = str(int(club_places) - 5)
+        expected_club_value = str(int(club_points) - 3 * 5)
         assert context['club']['points'] == expected_club_value
         actual_competition = [comp for comp in context['competitions'] if comp['name'] == competition_name]
         expected_competition_value = str(int(competition_places) - 5)
@@ -560,7 +559,7 @@ def test_purchasePlaces_when_no_place_available(mocker, client,
                                                 club_connected):
     with captured_templates(server.app) as templates:
         actual_club = club_connected
-        club_places = actual_club['points']
+        club_points = actual_club['points']
         competition_choose = competition_to_book
         competition_places = competition_choose['numberOfPlaces']
         club_name = actual_club["name"]
@@ -575,7 +574,7 @@ def test_purchasePlaces_when_no_place_available(mocker, client,
                 'places': places_booked}
         client.post('/purchasePlaces', data=form)
         template, context = templates[0]
-        expected_value_for_club = club_places
+        expected_value_for_club = club_points
         assert context['club'] == actual_club
         assert context['club']['points'] == expected_value_for_club
         assert context['competitions'] == list_of_competitions
@@ -588,7 +587,7 @@ def test_purchasePlaces_when_club_owns_not_enough_places(mocker, client,
                                                          competition_to_book):
     with captured_templates(server.app) as templates:
         actual_club = list_of_clubs_file['clubs'][1]
-        club_places = actual_club['points']
+        club_points = actual_club['points']
         competition_choose = competition_to_book
         competition_places = competition_choose['numberOfPlaces']
         club_name = actual_club["name"]
@@ -597,13 +596,13 @@ def test_purchasePlaces_when_club_owns_not_enough_places(mocker, client,
                             list_of_clubs_file['clubs'])
         mocker.patch.object(server, 'competitions',
                             list_of_competitions)
-        places_booked = int(club_places) + 1
+        places_booked = math.ceil(int(club_points) / 3) + 1
         form = {'club': club_name,
                 'competition': competition_name,
                 'places': places_booked}
         client.post('/purchasePlaces', data=form)
         template, context = templates[0]
-        expected_value_for_club = club_places
+        expected_value_for_club = club_points
         expected_value_for_competition = competition_places
         assert context['club'] == actual_club
         assert context['club']['points'] == expected_value_for_club
@@ -619,7 +618,7 @@ def test_purchasePlaces_when_club_wants_too_many_places(mocker, client,
                                                         club_connected):
     with captured_templates(server.app) as templates:
         actual_club = club_connected
-        club_places = actual_club['points']
+        club_points = actual_club['points']
         competition_choose = competition_to_book
         competition_places = competition_choose['numberOfPlaces']
         club_name = actual_club["name"]
@@ -633,7 +632,7 @@ def test_purchasePlaces_when_club_wants_too_many_places(mocker, client,
                 'places': 13}
         client.post('/purchasePlaces', data=form)
         template, context = templates[0]
-        expected_value_for_club = club_places
+        expected_value_for_club = club_points
         expected_value_for_competition = competition_places
         assert context['club'] == actual_club
         assert context['club']['points'] == expected_value_for_club

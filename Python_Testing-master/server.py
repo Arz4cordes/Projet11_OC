@@ -96,12 +96,13 @@ def purchasePlaces():
         competition_name = the_competition['name']
         already_reserved = the_club['reserved_places'][competition_name]
         placesRequired = int(request.form['places'])
+        points_to_substract = 3 * placesRequired
         total_places_reserved = placesRequired + already_reserved
         actual_club_points = int(the_club['points'])
-        actual_competition_points = int(the_competition['numberOfPlaces'])
-        new_club_points = actual_club_points - placesRequired
-        new_competition_points = actual_competition_points - placesRequired
-        if new_competition_points < 0:
+        actual_competition_places = int(the_competition['numberOfPlaces'])
+        new_club_points = actual_club_points - points_to_substract
+        new_competition_places = actual_competition_places - placesRequired
+        if new_competition_places < 0:
                 flash("There's not enough places in this competition \n \
                     to book all these places")
                 return render_template('welcome.html',
@@ -118,10 +119,13 @@ def purchasePlaces():
                                    club=the_club,
                                    competition=the_competition)      
         else:
-            the_competition['numberOfPlaces'] = str(new_competition_points)
+            the_competition['numberOfPlaces'] = str(new_competition_places)
             the_club['points'] = str(new_club_points)
             the_club['reserved_places'][competition_name] = total_places_reserved
-            flash('Great-booking complete!')
+            confirm_text = "Great-booking complete! "
+            confirm_text += f"You successfully booked {placesRequired} places for the "
+            confirm_text += f"competition {competition_name}. You spend {points_to_substract} points."
+            flash(confirm_text)
             return render_template('welcome.html',
                                    club=the_club,
                                    competitions=competitions)
